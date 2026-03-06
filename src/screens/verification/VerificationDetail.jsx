@@ -11,14 +11,15 @@ const VerificationDetail = () => {
     const queryClient = useQueryClient();
     const [rejectionReason, setRejectionReason] = useState('');
     const [showRejectModal, setShowRejectModal] = useState(false);
+    const userApiUrl = import.meta.env.VITE_USER_API_URL || 'http://localhost:3200/api';
 
     const { data, isLoading } = useQuery({
         queryKey: ['kyc-verification', id],
-        queryFn: () => api.get(`/kyc/admin/requests/${id}`).then(res => res.data)
+        queryFn: () => api.get(`${userApiUrl}/kyc/admin/requests/${id}`).then(res => res.data)
     });
 
     const approveMutation = useMutation({
-        mutationFn: () => api.post(`/kyc/admin/approve/${id}`, { adminId: 'ADMIN_USER' }),
+        mutationFn: () => api.post(`${userApiUrl}/kyc/admin/approve/${id}`, { adminId: 'ADMIN_USER' }),
         onSuccess: () => {
             queryClient.invalidateQueries(['kyc-verifications']);
             queryClient.invalidateQueries(['kyc-verification', id]);
@@ -27,7 +28,7 @@ const VerificationDetail = () => {
     });
 
     const rejectMutation = useMutation({
-        mutationFn: (reason) => api.post(`/kyc/admin/reject/${id}`, { adminId: 'ADMIN_USER', reason }),
+        mutationFn: (reason) => api.post(`${userApiUrl}/kyc/admin/reject/${id}`, { adminId: 'ADMIN_USER', reason }),
         onSuccess: () => {
             queryClient.invalidateQueries(['kyc-verifications']);
             queryClient.invalidateQueries(['kyc-verification', id]);

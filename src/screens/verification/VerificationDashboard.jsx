@@ -8,9 +8,10 @@ import { Link } from 'react-router-dom';
 const VerificationDashboard = () => {
     const [statusFilter, setStatusFilter] = useState('');
 
+    const userApiUrl = import.meta.env.VITE_USER_API_URL || 'http://localhost:3200/api';
     const { data, isLoading, refetch } = useQuery({
         queryKey: ['kyc-verifications', statusFilter],
-        queryFn: () => api.get(`/kyc/admin/requests${statusFilter ? `?status=${statusFilter}` : ''}`).then(res => res.data)
+        queryFn: () => api.get(`${userApiUrl}/kyc/admin/requests${statusFilter ? `?status=${statusFilter}` : ''}`).then(res => res.data)
     });
 
     const requests = data?.data || [];
