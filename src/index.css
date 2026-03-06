@@ -1,0 +1,42 @@
+/* @tailwind base;
+@tailwind components;
+@tailwind utilities; */
+
+@import "tailwindcss";
+
+
+@theme {
+  --color-primary: #FFD700;
+  /* Gold */
+  --color-secondary: #1a1a1a;
+  /* Dark */
+  --color-accent: #00A676;
+  --color-bg: #f8f9fa;
+  --color-card: #ffffff;
+  --color-border: #e9ecef;
+  --color-fg: #212529;
+}
+
+@layer base {
+  body {
+    @apply bg-bg text-fg font-sans;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-primary text-secondary px-4 py-2 rounded-lg font-bold hover:opacity-90 transition-all;
+  }
+
+  .btn-outline {
+    @apply border border-border px-4 py-2 rounded-lg font-medium hover:bg-bg transition-all;
+  }
+
+  .card {
+    @apply bg-card border border-border rounded-2xl p-6 shadow-sm;
+  }
+
+  .input {
+    @apply bg-bg border border-border rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary/50 outline-none w-full;
+  }
+}
