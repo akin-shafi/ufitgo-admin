@@ -76,6 +76,7 @@ import BankerPTADashboard from '@/screens/pta/BankerPTADashboard';
 import ComplianceEscrowDashboard from '@/screens/ComplianceEscrowDashboard';
 import VerificationDashboard from '@/screens/verification/VerificationDashboard';
 import VerificationDetail from '@/screens/verification/VerificationDetail';
+import CommissionManagement from '@/screens/commissions/CommissionManagement';
 
 const queryClient = new QueryClient();
 
@@ -100,6 +101,7 @@ function App() {
               <Route path="/compliance-escrow" element={<ComplianceEscrowDashboard />} />
               <Route path="/kyc-verifications" element={<VerificationDashboard />} />
               <Route path="/kyc-verifications/:id" element={<VerificationDetail />} />
+              <Route path="/commissions" element={<CommissionManagement />} />
               {/* Add more protected routes as needed */}
             </Route>
           </Routes>

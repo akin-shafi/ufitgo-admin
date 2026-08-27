@@ -30,6 +30,7 @@ const navigation = [
   { name: 'Operators', href: '/operators', icon: Users },
   { name: 'Users', href: '/users', icon: Users },
   { name: 'Payments', href: '/payments', icon: CreditCard },
+  { name: 'Commissions', href: '/commissions', icon: Banknote },
   { name: 'Settings', href: '/settings', icon: Settings },
 ];
 
