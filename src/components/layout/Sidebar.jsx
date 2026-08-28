@@ -66,12 +66,13 @@ const navigation = [
 ];
 
 const NavItem = ({ item }) => {
+  const location = useLocation();
+  const isChildActive = item.children ? item.children.some(child => location.pathname === child.href) : false;
+  const [isOpen, setIsOpen] = useState(isChildActive);
+
   if (item.visible === false) return null;
 
   if (item.children) {
-    const location = useLocation();
-    const isChildActive = item.children.some(child => location.pathname === child.href);
-    const [isOpen, setIsOpen] = useState(isChildActive);
 
     return (
       <div className="mb-1">
