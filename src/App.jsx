@@ -9,10 +9,12 @@ import api from '@/api/client';
 import { Plane, Package, DollarSign, ShieldCheck, Loader2 } from 'lucide-react';
 
 const Dashboard = () => {
-  const { data: stats, isLoading } = useQuery({
+  const { data: response, isLoading } = useQuery({
     queryKey: ['global-stats'],
-    queryFn: () => api.get('/operator/reports/internal/global/stats').then(res => res.data)
+    queryFn: () => api.get('/admin/stats').then(res => res.data)
   });
+
+  const stats = response?.data || {};
 
   if (isLoading) return (
     <DashboardLayout title="Platform Overview">
