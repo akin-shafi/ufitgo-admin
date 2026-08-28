@@ -13,6 +13,7 @@ import {
   Landmark,
   ShieldCheck,
   CheckCircle,
+  Map,
 } from 'lucide-react';
 
 import { useAuth } from '@/context/AuthContext';
@@ -27,6 +28,8 @@ const navigation = [
   { name: 'Extensions', href: '/extensions', icon: Globe },
   { name: 'Compliance & Escrow', href: '/compliance-escrow', icon: ShieldCheck, visible: isFeatureEnabled('ESCROW_DASHBOARD') },
   { name: 'KYC Verification', href: '/kyc-verifications', icon: CheckCircle },
+  { name: 'Journey Tracker', href: '/journey-tracker', icon: Map },
+  { name: 'Archived Bookings', href: '/archived-bookings', icon: Map },
   { name: 'Operators', href: '/operators', icon: Users },
   { name: 'Users', href: '/users', icon: Users },
   { name: 'Payments', href: '/payments', icon: CreditCard },

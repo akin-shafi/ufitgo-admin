@@ -77,6 +77,8 @@ import ComplianceEscrowDashboard from '@/screens/ComplianceEscrowDashboard';
 import VerificationDashboard from '@/screens/verification/VerificationDashboard';
 import VerificationDetail from '@/screens/verification/VerificationDetail';
 import CommissionManagement from '@/screens/commissions/CommissionManagement';
+import JourneyTrackerDashboard from '@/screens/bookings/JourneyTrackerDashboard';
+import ArchivedBookings from '@/screens/bookings/ArchivedBookings';
 
 const queryClient = new QueryClient();
 
@@ -97,11 +99,13 @@ function App() {
               <Route path="/payments" element={<PaymentPlatformScreen />} />
               <Route path="/settings" element={<SettingsScreen />} />
               <Route path="/broadcast" element={<BroadcastMessenger />} />
-              <Route path="/banker-portal" element={<BankerPTADashboard />} />
-              <Route path="/compliance-escrow" element={<ComplianceEscrowDashboard />} />
-              <Route path="/kyc-verifications" element={<VerificationDashboard />} />
-              <Route path="/kyc-verifications/:id" element={<VerificationDetail />} />
+              <Route path="/banker-pta" element={<BankerPTADashboard />} />
+              <Route path="/compliance" element={<ComplianceEscrowDashboard />} />
+              <Route path="/verifications" element={<VerificationDashboard />} />
+              <Route path="/verifications/:id" element={<VerificationDetail />} />
               <Route path="/commissions" element={<CommissionManagement />} />
+              <Route path="/journey-tracker" element={<JourneyTrackerDashboard />} />
+              <Route path="/archived-bookings" element={<ArchivedBookings />} />
               {/* Add more protected routes as needed */}
             </Route>
           </Routes>
