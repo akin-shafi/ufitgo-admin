@@ -14,7 +14,7 @@ export const AuthProvider = ({ children }) => {
         try {
           // You could add a /me endpoint to verify token and get fresh user data
           // For now we trust the local storage if token exists
-        } catch (error) {
+        } catch  {
           logout();
         }
       }
@@ -24,15 +24,17 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = async (email, password) => {
-    const { data } = await api.post('/operator/auth/login', { email, password });
+    // Uses VITE_API_URL which will point to Kong API Gateway, or Admin API directly if configured
+    const { data } = await api.post('/admin/auth/login', { email, password });
     
-    if (data.operator.role !== 'admin') {
-      throw new Error('Access denied. Admin portal only.');
+    // The new admin api returns { access_token, admin: { id, email, name } }
+    if (!data.admin) {
+      throw new Error('Access denied. Invalid admin credentials.');
     }
 
     localStorage.setItem('token', data.access_token);
-    localStorage.setItem('user', JSON.stringify(data.operator));
-    setUser(data.operator);
+    localStorage.setItem('user', JSON.stringify(data.admin));
+    setUser(data.admin);
     return data;
   };
 
@@ -49,6 +51,7 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) throw new Error('useAuth must be used within AuthProvider');

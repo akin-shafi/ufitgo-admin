@@ -28,8 +28,8 @@ const slides = [
 ];
 
 const LoginScreen = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('admin@ufitgo.com');
+  const [password, setPassword] = useState('admin123');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [activeSlide, setActiveSlide] = useState(0);

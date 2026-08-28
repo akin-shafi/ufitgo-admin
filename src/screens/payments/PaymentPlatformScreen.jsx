@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation,  } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import paymentClient from '@/api/paymentClient';
+import api from '@/api/client';
 import { 
   Plus, 
   ShieldCheck, 
@@ -18,22 +18,22 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { clsx } from 'clsx';
-import { motion, AnimatePresence } from 'framer-motion';
+import {  AnimatePresence } from 'framer-motion';
 
 const PaymentPlatformScreen = () => {
-  const queryClient = useQueryClient();
+  // const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newClientData, setNewClientData] = useState(null); // To store newly generated key
 
   // Queries
   const { data: clients, isLoading: clientsLoading } = useQuery({
     queryKey: ['payment-clients'],
-    queryFn: () => paymentClient.get('/mgmt/clients').then(res => res.data)
+    queryFn: () => api.get('/admin/payments/clients').then(res => res.data)
   });
 
   const { data: transactions, isLoading: txLoading } = useQuery({
     queryKey: ['payment-transactions'],
-    queryFn: () => paymentClient.get('/mgmt/transactions').then(res => res.data),
+    queryFn: () => api.get('/admin/payments/transactions').then(res => res.data),
     refetchInterval: 10000 // Refresh every 10s for "live" feel
   });
 
@@ -223,9 +223,9 @@ const StatCard = ({ title, value, desc, icon }) => (
 );
 
 const RegistrationForm = ({ onGenerated }) => {
-  const [loading, setLoading] = useState(false);
+  const [ setLoading] = useState(false);
   const mutation = useMutation({
-    mutationFn: (data) => paymentClient.post('/mgmt/clients', data).then(res => res.data),
+    mutationFn: (data) => api.post('/admin/payments/clients', data).then(res => res.data),
     onSuccess: (data) => {
       onGenerated(data);
     }
