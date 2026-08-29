@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import api from '@/api/client';
-import { toast } from 'react-[#333]' ? toast : { success: console.log, error: console.error };
+import { toast } from 'react-hot-toast';
 import { 
     Mail, 
     Plus, 
@@ -85,7 +85,7 @@ export default function TemplateManager() {
     const handleSaveTemplate = async (e) => {
         e.preventDefault();
         if (!formData.slug.trim() || !formData.subject.trim() || !formData.htmlBody.trim()) {
-            alert('Please fill in all required fields (Slug, Subject, HTML Body)');
+            toast.error('Please fill in all required fields (Slug, Subject, HTML Body)');
             return;
         }
 
@@ -94,7 +94,7 @@ export default function TemplateManager() {
                 // Update
                 const res = await api.put(`/admin/notifications/templates/${editingTemplate.slug}`, formData);
                 if (res.data?.success !== false) {
-                    alert('Template updated successfully!');
+                    toast.success('Template updated successfully!');
                     setEditingTemplate(null);
                     fetchTemplates();
                 }
@@ -102,13 +102,13 @@ export default function TemplateManager() {
                 // Create
                 const res = await api.post('/admin/notifications/templates', formData);
                 if (res.data?.success !== false) {
-                    alert('Template created successfully!');
+                    toast.success('Template created successfully!');
                     setIsCreateModalOpen(false);
                     fetchTemplates();
                 }
             }
         } catch (err) {
-            alert(err.response?.data?.error || 'Failed to save template');
+            toast.error(err.response?.data?.error || 'Failed to save template');
         }
     };
 
@@ -117,17 +117,17 @@ export default function TemplateManager() {
         try {
             const res = await api.delete(`/admin/notifications/templates/${slug}`);
             if (res.data?.success !== false) {
-                alert('Template deleted successfully!');
+                toast.success('Template deleted successfully!');
                 fetchTemplates();
             }
         } catch (err) {
-            alert(err.response?.data?.error || 'Failed to delete template');
+            toast.error(err.response?.data?.error || 'Failed to delete template');
         }
     };
 
     const handleSendTestEmail = async (slug) => {
         if (!testEmailAddress.trim() || !testEmailAddress.includes('@')) {
-            alert('Please enter a valid recipient email address');
+            toast.error('Please enter a valid recipient email address');
             return;
         }
         setSendingTest(true);
@@ -140,10 +140,10 @@ export default function TemplateManager() {
                 recipients: [{ email: testEmailAddress.trim() }]
             });
             if (res.data?.success !== false) {
-                alert(`Test email sent to ${testEmailAddress.trim()}! Check your inbox.`);
+                toast.success(`Test email sent to ${testEmailAddress.trim()}!`);
             }
         } catch (err) {
-            alert('Failed to send test email');
+            toast.error('Failed to send test email');
         } finally {
             setSendingTest(false);
         }
