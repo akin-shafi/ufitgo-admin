@@ -125,7 +125,7 @@ export default function TemplateManager() {
         }
     };
 
-    const handleSendTestEmail = async (slug) => {
+    const handleSendTestEmail = async () => {
         if (!testEmailAddress.trim() || !testEmailAddress.includes('@')) {
             toast.error('Please enter a valid recipient email address');
             return;
@@ -142,7 +142,7 @@ export default function TemplateManager() {
             if (res.data?.success !== false) {
                 toast.success(`Test email sent to ${testEmailAddress.trim()}!`);
             }
-        } catch (err) {
+        } catch {
             toast.error('Failed to send test email');
         } finally {
             setSendingTest(false);
@@ -178,7 +178,7 @@ export default function TemplateManager() {
             <div className="space-y-6">
                 
                 {/* Top Banner & Stats */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-[#0F4C5C] to-[#156B82] p-6 rounded-2xl text-white shadow-lg">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-[#046A38] to-[#156B82] p-6 rounded-2xl text-white shadow-lg">
                     <div>
                         <div className="flex items-center space-x-2">
                             <Mail className="w-6 h-6 text-[#FFB800]" />
@@ -191,7 +191,7 @@ export default function TemplateManager() {
                     
                     <button
                         onClick={handleOpenCreate}
-                        className="inline-flex items-center px-4 py-2.5 bg-[#FFB800] text-[#0F4C5C] font-bold rounded-xl text-sm shadow-md hover:bg-[#ffa800] transition"
+                        className="inline-flex items-center px-4 py-2.5 bg-[#FFB800] text-[#046A38] font-bold rounded-xl text-sm shadow-md hover:bg-[#ffa800] transition"
                     >
                         <Plus className="w-4 h-4 mr-2" />
                         Create New Template
@@ -205,7 +205,7 @@ export default function TemplateManager() {
                             onClick={() => setActiveTab('all')}
                             className={`px-4 py-2 font-semibold text-sm rounded-lg transition ${
                                 activeTab === 'all' 
-                                    ? 'bg-[#0F4C5C] text-white shadow-sm' 
+                                    ? 'bg-[#046A38] text-white shadow-sm' 
                                     : 'text-gray-600 hover:bg-gray-100'
                             }`}
                         >
@@ -215,7 +215,7 @@ export default function TemplateManager() {
                             onClick={() => setActiveTab('system')}
                             className={`px-4 py-2 font-semibold text-sm rounded-lg transition flex items-center space-x-1.5 ${
                                 activeTab === 'system' 
-                                    ? 'bg-[#0F4C5C] text-white shadow-sm' 
+                                    ? 'bg-[#046A38] text-white shadow-sm' 
                                     : 'text-gray-600 hover:bg-gray-100'
                             }`}
                         >
@@ -226,7 +226,7 @@ export default function TemplateManager() {
                             onClick={() => setActiveTab('feature')}
                             className={`px-4 py-2 font-semibold text-sm rounded-lg transition flex items-center space-x-1.5 ${
                                 activeTab === 'feature' 
-                                    ? 'bg-[#0F4C5C] text-white shadow-sm' 
+                                    ? 'bg-[#046A38] text-white shadow-sm' 
                                     : 'text-gray-600 hover:bg-gray-100'
                             }`}
                         >
@@ -242,7 +242,7 @@ export default function TemplateManager() {
                             placeholder="Search by slug or subject..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-[#0F4C5C]"
+                            className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-[#046A38]"
                         />
                     </div>
                 </div>
@@ -250,7 +250,7 @@ export default function TemplateManager() {
                 {/* Templates Grid */}
                 {loading ? (
                     <div className="text-center py-16 bg-white rounded-xl border border-gray-200">
-                        <RefreshCw className="w-8 h-8 animate-spin text-[#0F4C5C] mx-auto mb-3" />
+                        <RefreshCw className="w-8 h-8 animate-spin text-[#046A38] mx-auto mb-3" />
                         <p className="text-sm text-gray-500 font-medium">Loading email templates...</p>
                     </div>
                 ) : filteredTemplates.length === 0 ? (
@@ -295,7 +295,7 @@ export default function TemplateManager() {
                                     <div className="pt-3 border-t border-gray-100 flex items-center justify-between">
                                         <button
                                             onClick={() => handleOpenEdit(tmpl)}
-                                            className="inline-flex items-center text-xs font-bold text-[#0F4C5C] hover:text-[#156B82] bg-cyan-50 hover:bg-cyan-100 px-3 py-1.5 rounded-lg transition"
+                                            className="inline-flex items-center text-xs font-bold text-[#046A38] hover:text-[#156B82] bg-cyan-50 hover:bg-cyan-100 px-3 py-1.5 rounded-lg transition"
                                         >
                                             <Edit2 className="w-3.5 h-3.5 mr-1" />
                                             Edit & Preview
@@ -338,7 +338,7 @@ export default function TemplateManager() {
                                         type="button"
                                         onClick={() => setPreviewMode('code')}
                                         className={`px-3 py-1.5 text-xs font-bold rounded-lg transition flex items-center space-x-1 ${
-                                            previewMode === 'code' ? 'bg-[#0F4C5C] text-white' : 'bg-gray-100 text-gray-600'
+                                            previewMode === 'code' ? 'bg-[#046A38] text-white' : 'bg-gray-100 text-gray-600'
                                         }`}
                                     >
                                         <Code className="w-3.5 h-3.5" />
@@ -348,7 +348,7 @@ export default function TemplateManager() {
                                         type="button"
                                         onClick={() => setPreviewMode('preview')}
                                         className={`px-3 py-1.5 text-xs font-bold rounded-lg transition flex items-center space-x-1 ${
-                                            previewMode === 'preview' ? 'bg-[#0F4C5C] text-white' : 'bg-gray-100 text-gray-600'
+                                            previewMode === 'preview' ? 'bg-[#046A38] text-white' : 'bg-gray-100 text-gray-600'
                                         }`}
                                     >
                                         <Eye className="w-3.5 h-3.5" />
@@ -456,9 +456,9 @@ export default function TemplateManager() {
                                         <div className="border border-gray-300 rounded-xl p-4 bg-gray-100 max-h-96 overflow-y-auto">
                                             <div className="max-w-md mx-auto bg-white rounded-xl shadow border border-gray-200 overflow-hidden">
                                                 {/* Header */}
-                                                <div className="bg-gradient-to-r from-[#0F4C5C] to-[#156B82] p-5 text-center text-white">
+                                                <div className="bg-gradient-to-r from-[#046A38] to-[#0B8B4F] p-5 text-center text-white">
                                                     <div className="text-xl font-extrabold text-[#FFB800] uppercase tracking-wider">🕋 UfitGo</div>
-                                                    <div className="text-[10px] uppercase tracking-widest text-white/80 font-bold mt-1">Your Trusted Hajj & Umrah Companion</div>
+                                                    <div className="text-[10px] uppercase tracking-widest text-white/90 font-bold mt-1">Your Trusted Hajj & Umrah Companion</div>
                                                 </div>
 
                                                 {/* Content */}
@@ -466,7 +466,7 @@ export default function TemplateManager() {
 
                                                 {/* Footer */}
                                                 <div className="bg-gray-50 p-4 text-center border-t border-gray-100 text-xs text-gray-400">
-                                                    <div className="font-bold text-[#0F4C5C] text-[11px] mb-1">Website • Explore Packages • Support Center</div>
+                                                    <div className="font-bold text-[#046A38] text-[11px] mb-1">Website • Explore Packages • Support Center</div>
                                                     © 2026 UfitGo Technologies Ltd. All rights reserved.
                                                 </div>
                                             </div>
@@ -477,7 +477,7 @@ export default function TemplateManager() {
                                 {/* Test Send Box */}
                                 <div className="bg-gray-50 border border-gray-200 rounded-xl p-3 flex flex-col sm:flex-row items-center justify-between gap-3">
                                     <div className="flex items-center space-x-2 text-xs text-gray-600">
-                                        <Send className="w-4 h-4 text-[#0F4C5C]" />
+                                        <Send className="w-4 h-4 text-[#046A38]" />
                                         <span>Send test email to check formatting in your real inbox:</span>
                                     </div>
 
@@ -511,7 +511,7 @@ export default function TemplateManager() {
                                     </button>
                                     <button
                                         type="submit"
-                                        className="px-5 py-2 bg-[#0F4C5C] text-white text-xs font-bold rounded-xl shadow hover:bg-[#156B82] transition"
+                                        className="px-5 py-2 bg-[#046A38] text-white text-xs font-bold rounded-xl shadow hover:bg-[#156B82] transition"
                                     >
                                         Save Template
                                     </button>
