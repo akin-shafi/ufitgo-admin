@@ -20,7 +20,8 @@ import {
   ChevronRight,
   Briefcase,
   Activity,
-  Package
+  Package,
+  Mail
 } from 'lucide-react';
 
 import { useAuth } from '@/context/AuthContext';
@@ -65,6 +66,7 @@ const navigation = [
     children: [
       { name: 'Promo Codes', href: '/promos', icon: Megaphone },
       { name: 'Broadcast', href: '/broadcast', icon: Megaphone },
+      { name: 'Email Templates', href: '/templates', icon: Mail },
       { name: 'Extensions', href: '/extensions', icon: Globe },
     ]
   },

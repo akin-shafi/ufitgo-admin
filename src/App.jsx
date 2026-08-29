@@ -148,6 +148,7 @@ import OperatorDetail from '@/screens/operators/OperatorDetail';
 import SettingsScreen from '@/screens/settings/SettingsScreen';
 import PaymentPlatformScreen from '@/screens/payments/PaymentPlatformScreen';
 import BroadcastMessenger from '@/screens/notifications/BroadcastMessenger';
+import TemplateManager from '@/screens/templates/TemplateManager';
 import BankerPTADashboard from '@/screens/pta/BankerPTADashboard';
 import ComplianceEscrowDashboard from '@/screens/ComplianceEscrowDashboard';
 import VerificationDashboard from '@/screens/verification/VerificationDashboard';
@@ -196,6 +197,7 @@ function App() {
               <Route path="/payments" element={<PaymentPlatformScreen />} />
               <Route path="/settings" element={<SettingsScreen />} />
               <Route path="/broadcast" element={<BroadcastMessenger />} />
+              <Route path="/templates" element={<TemplateManager />} />
               <Route path="/banker-pta" element={<BankerPTADashboard />} />
               <Route path="/compliance" element={<ComplianceEscrowDashboard />} />
               <Route path="/verifications" element={<VerificationDashboard />} />
