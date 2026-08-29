@@ -86,7 +86,6 @@ const Dashboard = () => {
                   </div>
                   <div>
                     <div className="font-semibold">{pkg.title}</div>
-                    <div className="text-sm text-fg/60">ID: {pkg.packageId}</div>
                   </div>
                 </div>
                 <div className="text-right">
@@ -110,7 +109,6 @@ const Dashboard = () => {
                   </div>
                   <div>
                     <div className="font-semibold">{op.companyName}</div>
-                    <div className="text-sm text-fg/60">ID: {op.operatorId}</div>
                   </div>
                 </div>
                 <div className="text-right">
