@@ -28,7 +28,7 @@ const SettingsScreen = () => {
     setSuccess('');
     
     try {
-      await api.post('/operator/auth/change-password', {
+      await api.post('/admin/operator-auth/change-password', {
         id: user.id,
         oldPassword: passwordData.oldPassword,
         newPassword: passwordData.newPassword

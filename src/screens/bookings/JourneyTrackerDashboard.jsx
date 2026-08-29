@@ -24,11 +24,11 @@ const JourneyTrackerDashboard = () => {
 
   const { data: bookings, isLoading } = useQuery({
     queryKey: ['admin-journey-tracker'],
-    queryFn: () => api.get('/bookings/admin/journey-tracker').then(res => res.data)
+    queryFn: () => api.get('/admin/bookings/journey-tracker').then(res => res.data)
   });
 
   const updateStageMutation = useMutation({
-    mutationFn: ({ id, data }) => api.post(`/bookings/admin/${id}/update-stage`, data),
+    mutationFn: ({ id, data }) => api.post(`/admin/bookings/${id}/update-stage`, data),
     onSuccess: () => {
       queryClient.invalidateQueries(['admin-journey-tracker']);
       toast.success('Booking updated successfully');
@@ -41,7 +41,7 @@ const JourneyTrackerDashboard = () => {
   });
 
   const deleteBookingMutation = useMutation({
-    mutationFn: ({ id, reason }) => api.delete(`/bookings/admin/${id}`, { data: { reason } }),
+    mutationFn: ({ id, reason }) => api.delete(`/admin/bookings/${id}`, { data: { reason } }),
     onSuccess: () => {
       queryClient.invalidateQueries(['admin-journey-tracker']);
       toast.success('Booking deleted successfully');
@@ -52,7 +52,7 @@ const JourneyTrackerDashboard = () => {
   });
 
   const followUpMutation = useMutation({
-    mutationFn: ({ id, data }) => api.post(`/bookings/admin/${id}/follow-up`, data),
+    mutationFn: ({ id, data }) => api.post(`/admin/bookings/${id}/follow-up`, data),
     onSuccess: () => {
       queryClient.invalidateQueries(['admin-journey-tracker']);
       toast.success('Follow-up recorded successfully');

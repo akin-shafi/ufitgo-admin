@@ -14,16 +14,16 @@ const ComplianceEscrowDashboard = () => {
 
     const { data: escrows, isLoading } = useQuery({
         queryKey: ['admin-escrows'],
-        queryFn: () => api.get('/api/admin/escrow/all').then(res => res.data)
+        queryFn: () => api.get('/admin/escrow/all').then(res => res.data)
     });
 
     const { data: stats } = useQuery({
         queryKey: ['admin-escrow-stats'],
-        queryFn: () => api.get('/api/admin/escrow/stats').then(res => res.data)
+        queryFn: () => api.get('/admin/escrow/stats').then(res => res.data)
     });
 
     const mutation = useMutation({
-        mutationFn: ({ id, action }) => api.post(`/api/admin/escrow/${id}/${action}`),
+        mutationFn: ({ id, action }) => api.post(`/admin/escrow/${id}/${action}`),
         onSuccess: () => {
             queryClient.invalidateQueries(['admin-escrows']);
             queryClient.invalidateQueries(['admin-escrow-stats']);

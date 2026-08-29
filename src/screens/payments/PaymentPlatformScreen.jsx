@@ -26,7 +26,7 @@ const PaymentPlatformScreen = () => {
   const [newClientData, setNewClientData] = useState(null); // To store newly generated key
 
   // Queries
-  const { data: clients, isLoading: clientsLoading } = useQuery({
+  const { data: clients } = useQuery({
     queryKey: ['payment-clients'],
     queryFn: () => api.get('/admin/payments/clients').then(res => res.data)
   });
@@ -37,17 +37,29 @@ const PaymentPlatformScreen = () => {
     refetchInterval: 10000 // Refresh every 10s for "live" feel
   });
 
-  // Stats calculation
+  const [duration, setDuration] = useState('month');
+
+  // Stats from backend API
+  const { data: metricsData, isLoading: metricsLoading } = useQuery({
+    queryKey: ['payment-metrics', duration],
+    queryFn: () => api.get(`/admin/payments/metrics?duration=${duration}`).then(res => res.data),
+    refetchInterval: 30000 // Refresh every 30s
+  });
+
   const stats = React.useMemo(() => {
-    if (!transactions) return { volume: 0, successRate: 0, count: 0 };
-    const successCount = transactions.filter(t => t.status === 'success').length;
-    const totalVolume = transactions.reduce((acc, t) => acc + (t.status === 'success' ? t.amount : 0), 0);
+    if (!metricsData) return { settled: 0, pending: 0, failed: 0, successRate: 0, gateways: [] };
+    const { settled, pending, failed, gateways } = metricsData;
+    const total = settled + pending + failed;
+    const successRate = total > 0 ? ((settled / total) * 100).toFixed(1) : 0;
+    
     return {
-      volume: totalVolume,
-      successRate: transactions.length > 0 ? (successCount / transactions.length * 100).toFixed(1) : 0,
-      count: transactions.length
+      settled,
+      pending,
+      failed,
+      successRate,
+      gateways: gateways || []
     };
-  }, [transactions]);
+  }, [metricsData]);
 
   // Modal handler
   const closeRegistration = () => {
@@ -55,43 +67,115 @@ const PaymentPlatformScreen = () => {
     setNewClientData(null);
   };
 
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  // Derived transactions
+  const filteredAndSortedTransactions = React.useMemo(() => {
+    if (!transactions) return [];
+    
+    // Sort most recent first
+    let result = [...transactions].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    
+    // Search
+    if (searchTerm) {
+      const lowerSearch = searchTerm.toLowerCase();
+      result = result.filter(tx => 
+        tx.client_reference?.toLowerCase().includes(lowerSearch) ||
+        tx.provider_ref?.toLowerCase().includes(lowerSearch) ||
+        tx.id?.toLowerCase().includes(lowerSearch)
+      );
+    }
+    
+    // Filter
+    if (statusFilter !== 'all') {
+      result = result.filter(tx => tx.status === statusFilter);
+    }
+    
+    return result;
+  }, [transactions, searchTerm, statusFilter]);
+
+  const totalPages = Math.ceil(filteredAndSortedTransactions.length / itemsPerPage);
+  const currentTransactions = filteredAndSortedTransactions.slice(
+    (currentPage - 1) * itemsPerPage, 
+    currentPage * itemsPerPage
+  );
+
   return (
     <DashboardLayout title="Payment Platform Governance">
       <div className="space-y-8">
+        <div className="flex justify-end">
+          <select 
+            className="input max-w-xs"
+            value={duration}
+            onChange={(e) => setDuration(e.target.value)}
+          >
+            <option value="today">Today</option>
+            <option value="week">This Week</option>
+            <option value="month">This Month</option>
+            <option value="all">All Time</option>
+          </select>
+        </div>
+
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <StatCard 
-            title="Success Volume" 
-            value={`₦${(stats.volume / 1000).toLocaleString()}K`}
-            desc="Total successful transaction volume"
+            title="Settled Revenue" 
+            value={`₦${(stats.settled / 1000000).toFixed(1)}M`}
+            desc="Successfully processed"
             icon={<ShieldCheck className="w-5 h-5 text-green-500" />}
+          />
+          <StatCard 
+            title="Pending Volume" 
+            value={`₦${(stats.pending / 1000000).toFixed(1)}M`}
+            desc="Awaiting confirmation"
+            icon={<RefreshCw className="w-5 h-5 text-amber-500" />}
+          />
+          <StatCard 
+            title="Failed Revenue" 
+            value={`₦${(stats.failed / 1000000).toFixed(1)}M`}
+            desc="Lost or declined"
+            icon={<AlertCircle className="w-5 h-5 text-red-500" />}
           />
           <StatCard 
             title="Success Rate" 
             value={`${stats.successRate}%`}
-            desc={`${stats.count} total attempts logged`}
+            desc="Of total processed volume"
             icon={<Activity className="w-5 h-5 text-blue-500" />}
-          />
-          <StatCard 
-            title="Active Products" 
-            value={clients?.length || 0}
-            desc="Registered multi-tenant products"
-            icon={<CreditCard className="w-5 h-5 text-purple-500" />}
           />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Monitor - Live Transactions */}
           <div className="lg:col-span-2 space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-bold flex items-center">
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+              <h3 className="text-lg font-bold flex items-center shrink-0">
                 <RefreshCw className="w-5 h-5 mr-2 text-primary animate-spin-slow" />
                 Live Monitoring
               </h3>
-              <div className="flex space-x-2">
-                <button className="p-2 bg-card border border-border rounded-lg text-sm hover:border-primary transition-all">
-                  <Filter className="w-4 h-4" />
-                </button>
+              <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 w-full md:w-auto">
+                <div className="relative w-full sm:w-48">
+                  <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-fg/40" />
+                  <input 
+                    type="text" 
+                    placeholder="Search ref..." 
+                    className="input pl-9 w-full h-10"
+                    value={searchTerm}
+                    onChange={e => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+                  />
+                </div>
+                <select 
+                  className="input h-10 w-full sm:w-auto"
+                  value={statusFilter}
+                  onChange={e => { setStatusFilter(e.target.value); setCurrentPage(1); }}
+                >
+                  <option value="all">All Status</option>
+                  <option value="success">Success</option>
+                  <option value="pending">Pending</option>
+                  <option value="failed">Failed</option>
+                </select>
               </div>
             </div>
 
@@ -100,6 +184,7 @@ const PaymentPlatformScreen = () => {
                 <table className="w-full text-left text-sm">
                   <thead className="bg-bg/50 border-b border-border">
                     <tr>
+                      <th className="px-6 py-4 font-bold text-fg/60">#</th>
                       <th className="px-6 py-4 font-bold">Product</th>
                       <th className="px-6 py-4 font-bold">Reference</th>
                       <th className="px-6 py-4 font-bold">Amount</th>
@@ -109,71 +194,134 @@ const PaymentPlatformScreen = () => {
                   </thead>
                   <tbody className="divide-y divide-border">
                     {txLoading ? (
-                      <tr><td colSpan="5" className="px-6 py-10 text-center text-fg/40">Loading transactions...</td></tr>
-                    ) : transactions?.length === 0 ? (
-                      <tr><td colSpan="5" className="px-6 py-10 text-center text-fg/40">No transactions recorded yet</td></tr>
+                      <tr><td colSpan="6" className="px-6 py-10 text-center text-fg/40">Loading transactions...</td></tr>
+                    ) : currentTransactions.length === 0 ? (
+                      <tr><td colSpan="6" className="px-6 py-10 text-center text-fg/40">No transactions found</td></tr>
                     ) : (
-                      transactions?.map((tx) => (
-                        <tr key={tx.id} className="hover:bg-fg/5 transition-colors">
-                          <td className="px-6 py-4 font-medium">{tx.Client?.name || 'Unknown'}</td>
-                          <td className="px-6 py-4 font-mono text-xs">{tx.client_reference}</td>
-                          <td className="px-6 py-4 font-bold">₦{tx.amount.toLocaleString()}</td>
-                          <td className="px-6 py-4 uppercase text-[10px] font-bold tracking-widest">{tx.provider}</td>
-                          <td className="px-6 py-4">
-                            <span className={clsx(
-                              "px-2 py-1 rounded-lg text-[10px] font-bold uppercase",
-                              tx.status === 'success' ? "bg-green-500/10 text-green-500" :
-                              tx.status === 'pending' ? "bg-amber-500/10 text-amber-500" : "bg-red-500/10 text-red-500"
-                            )}>
-                              {tx.status}
-                            </span>
-                          </td>
-                        </tr>
-                      ))
+                      currentTransactions.map((tx, index) => {
+                        const clientName = clients?.find(c => c.id === tx.client_id)?.name || 'Unknown';
+                        return (
+                          <tr key={tx.id} className="hover:bg-fg/5 transition-colors">
+                            <td className="px-6 py-4 font-mono text-xs text-fg/60">
+                              {(currentPage - 1) * itemsPerPage + index + 1}
+                            </td>
+                            <td className="px-6 py-4 font-medium">{clientName}</td>
+                            <td className="px-6 py-4 font-mono text-xs">{tx.client_reference}</td>
+                            <td className="px-6 py-4 font-bold">₦{tx.amount.toLocaleString()}</td>
+                            <td className="px-6 py-4 uppercase text-[10px] font-bold tracking-widest">{tx.provider}</td>
+                            <td className="px-6 py-4">
+                              <span className={clsx(
+                                "px-2 py-1 rounded-lg text-[10px] font-bold uppercase",
+                                tx.status === 'success' ? "bg-green-500/10 text-green-500" :
+                                tx.status === 'pending' ? "bg-amber-500/10 text-amber-500" : "bg-red-500/10 text-red-500"
+                              )}>
+                                {tx.status}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })
                     )}
                   </tbody>
                 </table>
               </div>
+              
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between px-6 py-4 border-t border-border bg-bg/20">
+                  <div className="text-xs text-fg/60">
+                    Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredAndSortedTransactions.length)} of {filteredAndSortedTransactions.length}
+                  </div>
+                  <div className="flex space-x-2">
+                    <button 
+                      className="px-3 py-1 bg-card border border-border rounded-lg text-sm hover:border-primary disabled:opacity-50 disabled:hover:border-border"
+                      disabled={currentPage === 1}
+                      onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    >
+                      Prev
+                    </button>
+                    <button 
+                      className="px-3 py-1 bg-card border border-border rounded-lg text-sm hover:border-primary disabled:opacity-50 disabled:hover:border-border"
+                      disabled={currentPage === totalPages}
+                      onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                    >
+                      Next
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Client Management Sidebar */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-bold">Products</h3>
-              <button 
-                onClick={() => setIsModalOpen(true)}
-                className="btn btn-primary py-1 px-3 text-sm flex items-center"
-              >
-                <Plus className="w-4 h-4 mr-1" /> Add
-              </button>
+          {/* Sidebars */}
+          <div className="space-y-6">
+            
+            {/* Recent Failures Alerts */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-bold flex items-center text-red-500">
+                  <AlertCircle className="w-5 h-5 mr-2" />
+                  Action Alerts
+                </h3>
+              </div>
+              <div className="space-y-3">
+                {transactions?.filter(tx => tx.status === 'failed').slice(0, 5).map(tx => (
+                  <div key={tx.id} className="card p-4 border-red-500/20 bg-red-500/5">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="font-bold text-red-500">Failed Payment</span>
+                      <span className="text-xs text-fg/60">{new Date(tx.created_at).toLocaleTimeString()}</span>
+                    </div>
+                    <div className="font-bold mb-1">₦{tx.amount.toLocaleString()}</div>
+                    <div className="text-[10px] text-fg/60 font-mono break-all">Ref: {tx.client_reference}</div>
+                  </div>
+                ))}
+                {!transactions?.some(tx => tx.status === 'failed') && (
+                  <div className="text-center py-6 text-fg/40 text-sm">No recent failures.</div>
+                )}
+              </div>
             </div>
 
-            <div className="space-y-3">
-              {clientsLoading ? (
-                <div className="text-center py-10 text-fg/40">Loading products...</div>
-              ) : clients?.map(client => (
-                <div key={client.id} className="card p-4 hover:border-primary/50 transition-all group">
-                   <div className="flex items-center justify-between mb-2">
-                     <span className="font-bold">{client.name}</span>
-                     <span className={clsx(
-                        "w-2 h-2 rounded-full",
-                        client.status === 'active' ? "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]" : "bg-fg/20"
-                     )}></span>
-                   </div>
-                   <div className="text-[10px] text-fg/40 font-mono mb-3 uppercase tracking-tighter overflow-hidden text-ellipsis">
-                     ID: {client.id}
-                   </div>
-                   <div className="flex items-center justify-between">
-                      <div className="text-[10px] bg-bg px-2 py-1 rounded border border-border text-fg/60">
-                        {client.webhook_url ? "Webhook Active" : "No Webhook"}
-                      </div>
-                      <button className="text-fg/40 hover:text-primary transition-colors">
-                        <ExternalLink className="w-4 h-4" />
-                      </button>
-                   </div>
-                </div>
-              ))}
+            {/* Gateway Status Sidebar */}
+            <div className="space-y-4 pt-4 border-t border-border">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-bold">Provider Status</h3>
+                <span className="text-xs text-fg/60 flex items-center">
+                  <RefreshCw className="w-3 h-3 mr-1 animate-spin-slow" /> Live
+                </span>
+              </div>
+
+              <div className="space-y-3">
+                {metricsLoading ? (
+                  <div className="text-center py-10 text-fg/40">Checking providers...</div>
+                ) : stats.gateways.map(gw => (
+                  <div key={gw.name} className="card p-4 hover:border-primary/50 transition-all group">
+                     <div className="flex items-center justify-between mb-2">
+                       <span className="font-bold capitalize">{gw.name}</span>
+                       <span className={clsx(
+                          "px-2 py-1 rounded text-[10px] font-bold uppercase",
+                          gw.status === 'Operational' ? "bg-green-500/10 text-green-500" :
+                          gw.status === 'Degraded' ? "bg-amber-500/10 text-amber-500" : "bg-red-500/10 text-red-500"
+                       )}>
+                          {gw.status}
+                       </span>
+                     </div>
+                     <div className="w-full bg-border rounded-full h-1.5 mb-1 mt-3">
+                        <div 
+                          className={clsx("h-1.5 rounded-full", 
+                            gw.uptime > 95 ? "bg-green-500" : gw.uptime > 80 ? "bg-amber-500" : "bg-red-500"
+                          )} 
+                          style={{ width: `${gw.uptime}%` }}
+                        ></div>
+                     </div>
+                     <div className="text-right text-[10px] text-fg/60 font-mono">
+                       {gw.uptime}% Uptime
+                     </div>
+                  </div>
+                ))}
+                {stats.gateways.length === 0 && !metricsLoading && (
+                  <div className="text-center py-6 text-fg/40 text-sm">No gateway data available.</div>
+                )}
+              </div>
             </div>
           </div>
         </div>

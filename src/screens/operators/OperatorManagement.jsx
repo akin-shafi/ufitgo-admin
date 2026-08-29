@@ -1,124 +1,10 @@
 import React, { useState } from 'react';
-import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import api from '@/api/client';
-import { UserPlus, Trash2, Edit2, Shield, Mail, Phone, Loader2, Search, Filter, ShieldCheck, X, Package, User, Building, ExternalLink } from 'lucide-react';
+import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { UserPlus, Trash2, Edit2, Mail, Loader2, Search, Filter, ShieldCheck } from 'lucide-react';
 import { InviteModal } from '@/screens/users/UserManagement';
-
-const DossierModal = ({ operatorId, onClose }) => {
-  const { data: operator, isLoading } = useQuery({
-    queryKey: ['operator-dossier', operatorId],
-    queryFn: () => api.get(`/operator/auth/operators/${operatorId}/dossier`).then(res => res.data)
-  });
-
-  if (isLoading) return (
-    <div className="fixed inset-0 bg-bg/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-bg border border-border w-full max-w-2xl rounded-3xl p-8 flex justify-center py-20">
-        <Loader2 className="w-10 h-10 animate-spin text-primary" />
-      </div>
-    </div>
-  );
-
-  return (
-    <div className="fixed inset-0 bg-bg/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-bg border border-border w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-3xl p-8 shadow-2xl relative">
-        <button onClick={onClose} className="absolute top-6 right-6 p-2 hover:bg-bg-alt rounded-full">
-          <X className="w-6 h-6" />
-        </button>
-
-        <div className="flex items-center space-x-6 mb-8">
-          <div className="w-20 h-20 rounded-3xl bg-accent/10 flex items-center justify-center text-accent text-3xl font-bold">
-            {operator.companyName.charAt(0)}
-          </div>
-          <div>
-            <h2 className="text-3xl font-bold">{operator.companyName}</h2>
-            <p className="text-fg/60 flex items-center mt-1">
-              <Mail className="w-4 h-4 mr-2" /> {operator.email}
-              <span className="mx-3 text-border">|</span>
-              <Phone className="w-4 h-4 mr-2" /> {operator.phone || 'N/A'}
-            </p>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
-          {/* Business Owner Section */}
-          <div className="card bg-bg/50">
-            <h3 className="text-sm font-bold text-accent uppercase tracking-widest mb-6 flex items-center">
-              <User className="w-4 h-4 mr-2" /> Business Owner
-            </h3>
-            {operator.businessOwner ? (
-              <div className="space-y-4">
-                <div className="flex justify-between">
-                  <span className="text-fg/40 text-sm">Full Name:</span>
-                  <span className="font-bold">{operator.businessOwner.firstName} {operator.businessOwner.lastName}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-fg/40 text-sm">Phone:</span>
-                  <span className="font-medium">{operator.businessOwner.phone}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-fg/40 text-sm">NIN:</span>
-                  <span className="font-mono text-xs">{operator.businessOwner.nin || 'Not Provided'}</span>
-                </div>
-              </div>
-            ) : (
-              <p className="text-sm text-fg/40 italic">No business owner profile linked.</p>
-            )}
-          </div>
-
-          {/* Business Details */}
-          <div className="card bg-bg/50">
-            <h3 className="text-sm font-bold text-primary uppercase tracking-widest mb-6 flex items-center">
-              <Building className="w-4 h-4 mr-2" /> Compliance & Tier
-            </h3>
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <span className="text-fg/40 text-sm">Verification:</span>
-                <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
-                  operator.verificationStatus === 'approved' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'
-                }`}>
-                  {operator.verificationStatus}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-fg/40 text-sm">Tier Level:</span>
-                <span className="font-bold text-secondary">{operator.tier}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-fg/40 text-sm">Trust Score:</span>
-                <span className="font-bold text-accent">{operator.trustScore}%</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Packages Section */}
-        <div>
-          <h3 className="text-xl font-bold mb-6 flex items-center">
-            <Package className="w-5 h-5 mr-3" /> Service Inventory
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {operator.packages?.length > 0 ? operator.packages.map(pkg => (
-              <div key={pkg.id} className="p-4 border border-border rounded-2xl flex justify-between items-center hover:bg-bg/40 transition-colors">
-                <div>
-                  <h4 className="font-bold text-sm">{pkg.title}</h4>
-                  <p className="text-[10px] text-fg/40 uppercase font-bold tracking-tighter mt-1">
-                    {pkg.status} • {new Date(pkg.createdAt).toLocaleDateString()}
-                  </p>
-                </div>
-                <ExternalLink className="w-4 h-4 text-primary/40" />
-              </div>
-            )) : (
-              <div className="col-span-2 text-center py-12 border-2 border-dashed border-border rounded-3xl">
-                <p className="text-fg/40 text-sm italic">This operator has not posted any packages yet.</p>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
 
 const EditOperatorModal = ({ operator, onClose, onSuccess }) => {
   const [formData, setFormData] = useState({
@@ -126,11 +12,10 @@ const EditOperatorModal = ({ operator, onClose, onSuccess }) => {
     email: operator.email,
     phone: operator.phone || '',
     verificationStatus: operator.verificationStatus,
-    tier: operator.tier,
   });
 
   const mutation = useMutation({
-    mutationFn: (data) => api.put(`/operator/auth/users/${operator.id}`, data),
+    mutationFn: (data) => api.put(`/admin/operator-auth/users/${operator.id}`, data),
     onSuccess: () => {
       onSuccess();
       onClose();
@@ -149,19 +34,6 @@ const EditOperatorModal = ({ operator, onClose, onSuccess }) => {
               value={formData.companyName} 
               onChange={e => setFormData({...formData, companyName: e.target.value})}
             />
-          </div>
-          <div>
-            <label className="block text-xs font-bold text-fg/40 mb-1 text-uppercase">Tier Level</label>
-            <select 
-              className="input" 
-              value={formData.tier} 
-              onChange={e => setFormData({...formData, tier: e.target.value})}
-            >
-              <option value="BRONZE">BRONZE</option>
-              <option value="SILVER">SILVER</option>
-              <option value="GOLD">GOLD</option>
-              <option value="PLATINUM">PLATINUM</option>
-            </select>
           </div>
           <div>
             <label className="block text-xs font-bold text-fg/40 mb-1">Verification Status</label>
@@ -196,19 +68,19 @@ const OperatorManagement = () => {
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [selectedOperator, setSelectedOperator] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [viewingDossierId, setViewingDossierId] = useState(null);
+  const navigate = useNavigate();
 
   const queryClient = useQueryClient();
 
   // Fetch Operators
   const { data: operators, isLoading } = useQuery({
     queryKey: ['operators'],
-    queryFn: () => api.get('/operator/auth/operators').then(res => res.data)
+    queryFn: () => api.get('/admin/operator-auth/operators').then(res => res.data)
   });
 
   // Delete Mutation
   const deleteMutation = useMutation({
-    mutationFn: (id) => api.delete(`/operator/auth/users/${id}`),
+    mutationFn: (id) => api.delete(`/admin/operator-auth/users/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries(['operators']);
       alert('Operator account revoked successfully');
@@ -283,14 +155,10 @@ const OperatorManagement = () => {
                   <span className="text-fg/40 font-medium">Joined:</span>
                   <span className="font-bold text-fg/80">{new Date(op.createdAt).toLocaleDateString()}</span>
                 </div>
-                <div className="flex justify-between items-center text-sm">
-                  <span className="text-fg/40 font-medium">Tier:</span>
-                  <span className="font-bold text-secondary">{op.tier}</span>
-                </div>
               </div>
 
               <button 
-                onClick={() => setViewingDossierId(op.id)}
+                onClick={() => navigate(`/operators/${op.id}`)}
                 className="w-full mt-6 py-2 bg-primary/10 text-primary font-bold rounded-xl hover:bg-primary hover:text-secondary transition-all text-sm"
               >
                 View Full Dossier
@@ -310,12 +178,6 @@ const OperatorManagement = () => {
         />
       )}
 
-      {viewingDossierId && (
-        <DossierModal 
-          operatorId={viewingDossierId} 
-          onClose={() => setViewingDossierId(null)} 
-        />
-      )}
     </DashboardLayout>
   );
 };

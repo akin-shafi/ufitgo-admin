@@ -12,8 +12,7 @@ export const AuthProvider = ({ children }) => {
       const token = localStorage.getItem('token');
       if (token) {
         try {
-          // You could add a /me endpoint to verify token and get fresh user data
-          // For now we trust the local storage if token exists
+          // Verify token if needed
         } catch  {
           logout();
         }
@@ -22,6 +21,33 @@ export const AuthProvider = ({ children }) => {
     };
     checkAuth();
   }, []);
+
+  // Inactivity Timeout (15 minutes)
+  useEffect(() => {
+    let timeoutId;
+    const INACTIVITY_LIMIT = 15 * 60 * 1000; // 15 minutes
+
+    const resetTimeout = () => {
+      if (timeoutId) clearTimeout(timeoutId);
+      if (user) {
+        timeoutId = setTimeout(() => {
+          logout();
+          alert('You have been logged out due to inactivity.');
+        }, INACTIVITY_LIMIT);
+      }
+    };
+
+    if (user) {
+      resetTimeout();
+      const events = ['mousemove', 'keydown', 'mousedown', 'touchstart', 'scroll'];
+      events.forEach(event => window.addEventListener(event, resetTimeout));
+
+      return () => {
+        if (timeoutId) clearTimeout(timeoutId);
+        events.forEach(event => window.removeEventListener(event, resetTimeout));
+      };
+    }
+  }, [user]);
 
   const login = async (email, password) => {
     // Uses VITE_API_URL which will point to Kong API Gateway, or Admin API directly if configured

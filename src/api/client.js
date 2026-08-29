@@ -22,9 +22,9 @@ api.interceptors.response.use(
 
     if (error.response?.status === 401 && !isLoginRequest) {
       // Temporarily disabled force-logout so components can catch and display errors
-      // localStorage.removeItem('token');
-      // localStorage.removeItem('user');
-      // window.location.href = '/login';
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.href = '/login';
     }
     return Promise.reject(error);
   }

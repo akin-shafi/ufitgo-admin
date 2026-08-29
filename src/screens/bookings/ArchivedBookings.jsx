@@ -10,11 +10,11 @@ const ArchivedBookings = () => {
 
   const { data: archivedBookings, isLoading } = useQuery({
     queryKey: ['admin-archived-bookings'],
-    queryFn: () => api.get('/bookings/admin/archived').then(res => res.data)
+    queryFn: () => api.get('/admin/bookings/archived').then(res => res.data)
   });
 
   const permanentDeleteMutation = useMutation({
-    mutationFn: (id) => api.delete(`/bookings/admin/${id}/permanent`),
+    mutationFn: (id) => api.delete(`/admin/bookings/${id}/permanent`),
     onSuccess: () => {
       queryClient.invalidateQueries(['admin-archived-bookings']);
       toast.success('Booking permanently deleted');

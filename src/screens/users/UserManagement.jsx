@@ -19,12 +19,12 @@ const UserManagement = () => {
   // Fetch Admins
   const { data: admins, isLoading } = useQuery({
     queryKey: ['admins'],
-    queryFn: () => api.get('/operator/auth/users').then(res => res.data)
+    queryFn: () => api.get('/admin/operator-auth/users').then(res => res.data)
   });
 
   // Delete Mutation
   const deleteMutation = useMutation({
-    mutationFn: (id) => api.delete(`/operator/auth/users/${id}`),
+    mutationFn: (id) => api.delete(`/admin/operator-auth/users/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries(['admins']);
     }
@@ -32,7 +32,7 @@ const UserManagement = () => {
 
   // Toggle Active Status Mutation
   const toggleStatusMutation = useMutation({
-    mutationFn: (id) => api.patch(`/operator/auth/users/${id}/toggle-status`),
+    mutationFn: (id) => api.patch(`/admin/operator-auth/users/${id}/toggle-status`),
     onSuccess: () => {
       queryClient.invalidateQueries(['admins']);
     }
@@ -198,7 +198,7 @@ const EditAdminModal = ({ admin, onClose }) => {
     setLoading(true);
     setError('');
     try {
-      await api.put(`/operator/auth/users/${admin.id}`, formData);
+      await api.put(`/admin/operator-auth/users/${admin.id}`, formData);
       queryClient.invalidateQueries(['admins']);
       onClose();
     } catch (err) {
@@ -293,7 +293,7 @@ const ChangePasswordModal = ({ admin, onClose }) => {
 
     setLoading(true);
     try {
-      await api.put(`/operator/auth/users/${admin.id}/password`, { newPassword });
+      await api.put(`/admin/operator-auth/users/${admin.id}/password`, { newPassword });
       setSuccess(true);
       setTimeout(() => onClose(), 1500);
     } catch (err) {
@@ -412,7 +412,7 @@ const InviteModal = ({ role, onClose }) => {
     setLoading(true);
     setError('');
     try {
-      await api.post('/operator/auth/invite', formData);
+      await api.post('/admin/operator-auth/invite', formData);
       queryClient.invalidateQueries([role === 'admin' ? 'admins' : 'operators']);
       onClose();
     } catch (err) {

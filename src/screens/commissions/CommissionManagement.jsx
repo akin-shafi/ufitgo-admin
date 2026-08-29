@@ -9,7 +9,9 @@ export default function CommissionManagement() {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState('agreements');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({
+    name: '',
     type: 'PERCENTAGE',
     value: 10,
     targetLevel: 'PLATFORM',
@@ -19,30 +21,69 @@ export default function CommissionManagement() {
 
   const { data: configs, isLoading } = useQuery({
     queryKey: ['commissions'],
-    queryFn: () => api.get('/api/admin/commissions').then(res => res.data)
+    queryFn: () => api.get('/admin/commissions').then(res => res.data)
   });
 
   const { data: transactions, isLoading: isLoadingTransactions } = useQuery({
     queryKey: ['commission-transactions'],
-    queryFn: () => api.get('/api/admin/commissions/transactions').then(res => res.data)
+    queryFn: () => api.get('/admin/commissions/transactions').then(res => res.data)
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => api.post('/api/admin/commissions', data),
+    mutationFn: (data) => api.post('/admin/commissions', data),
     onSuccess: () => {
-      toast.success('Commission configuration saved');
+      toast.success('Commission rule created successfully');
       queryClient.invalidateQueries(['commissions']);
       setIsModalOpen(false);
     },
     onError: (error) => {
-      toast.error(error?.response?.data?.message || 'Failed to save configuration');
+      toast.error(error?.response?.data?.message || 'Failed to create configuration');
+    }
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }) => api.put(`/admin/commissions/${id}`, data),
+    onSuccess: () => {
+      toast.success('Commission rule updated successfully');
+      queryClient.invalidateQueries(['commissions']);
+      setIsModalOpen(false);
+      setEditingId(null);
+    },
+    onError: (error) => {
+      toast.error(error?.response?.data?.message || 'Failed to update configuration');
     }
   });
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    createMutation.mutate(formData);
+    if (editingId) {
+      updateMutation.mutate({ id: editingId, data: formData });
+    } else {
+      createMutation.mutate(formData);
+    }
   };
+
+  const openEditModal = (config) => {
+    setEditingId(config.id);
+    setFormData({
+      name: config.name || '',
+      type: config.type || 'PERCENTAGE',
+      value: config.value || 10,
+      targetLevel: config.targetLevel || 'PLATFORM',
+      targetId: config.targetId || '',
+      collectionStage: config.collectionStage || 'SPLIT_ACROSS_STAGES',
+      pspFeeBearer: config.pspFeeBearer || 'PLATFORM',
+    });
+    setIsModalOpen(true);
+  };
+
+  const umrahRule = configs?.find(c => c.name?.toLowerCase().includes('umrah'));
+  const hajjRule = configs?.find(c => c.name?.toLowerCase().includes('hajj'));
+  const defaultModel = umrahRule || hajjRule || configs?.[0];
+
+  const umrahValue = umrahRule ? `₦${umrahRule.value.toLocaleString()}` : 'Not Set';
+  const hajjValue = hajjRule ? `₦${hajjRule.value.toLocaleString()}` : 'Not Set';
+  const pspBearer = defaultModel?.pspFeeBearer || 'PLATFORM';
 
   return (
     <DashboardLayout title="Commission Management">
@@ -53,7 +94,18 @@ export default function CommissionManagement() {
         </div>
         {activeTab === 'agreements' && (
           <button
-            onClick={() => setIsModalOpen(true)}
+            onClick={() => {
+              setEditingId(null);
+              setFormData({
+                name: '',
+                type: 'PERCENTAGE',
+                value: 10,
+                targetLevel: 'PLATFORM',
+                collectionStage: 'SPLIT_ACROSS_STAGES',
+                pspFeeBearer: 'PLATFORM',
+              });
+              setIsModalOpen(true);
+            }}
             className="bg-primary text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 hover:bg-primary/90"
           >
             <Plus className="w-4 h-4" /> New Agreement
@@ -89,14 +141,20 @@ export default function CommissionManagement() {
       {activeTab === 'agreements' ? (
         <>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-white p-6 rounded-xl border border-slate-100 shadow-sm flex items-start gap-4">
-          <div className="p-3 bg-blue-50 text-blue-600 rounded-lg">
-            <Percent className="w-6 h-6" />
+        <div className="bg-white p-5 rounded-xl border border-slate-100 shadow-sm flex flex-col justify-center">
+          <div className="flex items-center gap-2 mb-3">
+            <Percent className="w-5 h-5 text-blue-600" />
+            <p className="text-sm text-slate-500 font-medium">Default Package Models</p>
           </div>
-          <div>
-            <p className="text-sm text-slate-500 font-medium">Default Model</p>
-            <h3 className="text-xl font-bold text-slate-900 mt-1">10% Platform</h3>
-            <p className="text-xs text-slate-400 mt-1">Global fallback rate</p>
+          <div className="flex gap-3">
+            <div className="flex-1 bg-slate-50 rounded-lg p-3 border border-slate-100">
+              <p className="text-xs text-slate-500 mb-1">Umrah Fallback</p>
+              <h3 className="text-base font-bold text-slate-900">{umrahValue}</h3>
+            </div>
+            <div className="flex-1 bg-slate-50 rounded-lg p-3 border border-slate-100">
+              <p className="text-xs text-slate-500 mb-1">Hajj Fallback</p>
+              <h3 className="text-base font-bold text-slate-900">{hajjValue}</h3>
+            </div>
           </div>
         </div>
         <div className="bg-white p-6 rounded-xl border border-slate-100 shadow-sm flex items-start gap-4">
@@ -105,8 +163,10 @@ export default function CommissionManagement() {
           </div>
           <div>
             <p className="text-sm text-slate-500 font-medium">PSP Fee Bearer</p>
-            <h3 className="text-xl font-bold text-slate-900 mt-1">Platform</h3>
-            <p className="text-xs text-slate-400 mt-1">UfitGo absorbs Paystack fees</p>
+            <h3 className="text-xl font-bold text-slate-900 mt-1 capitalize">{pspBearer.toLowerCase()}</h3>
+            <p className="text-xs text-slate-400 mt-1">
+              {pspBearer === 'PLATFORM' ? 'UfitGo absorbs Paystack fees' : 'Operator absorbs Paystack fees'}
+            </p>
           </div>
         </div>
         <div className="bg-white p-6 rounded-xl border border-slate-100 shadow-sm flex items-start gap-4">
@@ -126,25 +186,30 @@ export default function CommissionManagement() {
           <table className="w-full text-sm text-left">
             <thead className="bg-slate-50 text-slate-600 font-medium border-b border-slate-200">
               <tr>
+                <th className="px-6 py-4">Rule Name</th>
                 <th className="px-6 py-4">Target Level</th>
                 <th className="px-6 py-4">Value</th>
                 <th className="px-6 py-4">Collection Stage</th>
                 <th className="px-6 py-4">PSP Bearer</th>
                 <th className="px-6 py-4">Status</th>
+                <th className="px-6 py-4 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {isLoading ? (
                 <tr>
-                  <td colSpan="5" className="px-6 py-8 text-center text-slate-500">Loading configurations...</td>
+                  <td colSpan="7" className="px-6 py-8 text-center text-slate-500">Loading configurations...</td>
                 </tr>
               ) : configs?.length === 0 ? (
                 <tr>
-                  <td colSpan="5" className="px-6 py-8 text-center text-slate-500">No custom commissions configured.</td>
+                  <td colSpan="7" className="px-6 py-8 text-center text-slate-500">No custom commissions configured.</td>
                 </tr>
               ) : (
                 configs?.map((config) => (
                   <tr key={config.id} className="hover:bg-slate-50">
+                    <td className="px-6 py-4 font-medium text-slate-900">
+                      {config.name || 'Unnamed Rule'}
+                    </td>
                     <td className="px-6 py-4">
                       <div className="font-medium text-slate-900">{config.targetLevel}</div>
                       {config.targetId && <div className="text-xs text-slate-500">ID: {config.targetId}</div>}
@@ -169,6 +234,14 @@ export default function CommissionManagement() {
                       ) : (
                         <span className="text-slate-400 text-xs">Inactive</span>
                       )}
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <button
+                        onClick={() => openEditModal(config)}
+                        className="text-primary hover:text-primary/80 font-medium text-sm"
+                      >
+                        Edit
+                      </button>
                     </td>
                   </tr>
                 ))
@@ -239,19 +312,33 @@ export default function CommissionManagement() {
       )}
 
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-xl max-h-[90vh] flex flex-col overflow-hidden">
-            <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-              <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                <FileText className="w-5 h-5 text-primary" />
-                New Commercial Agreement
-              </h3>
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-xl shadow-xl flex flex-col max-h-[90vh]">
+            <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50 rounded-t-2xl">
+              <div>
+                <h3 className="text-xl font-bold text-slate-900">
+                  {editingId ? 'Edit Commercial Agreement' : 'New Commercial Agreement'}
+                </h3>
+                <p className="text-sm text-slate-500 mt-1">Configure automated commission splits</p>
+              </div>
               <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600">&times;</button>
             </div>
             
             <div className="p-6 overflow-y-auto">
               <form id="commissionForm" onSubmit={handleSubmit} className="space-y-5">
                 
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Rule Name / Tag</label>
+                  <input 
+                    type="text" 
+                    required
+                    placeholder="e.g. Standard Umrah Flat"
+                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none"
+                    value={formData.name || ''}
+                    onChange={e => setFormData({...formData, name: e.target.value})}
+                  />
+                </div>
+
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1">Target Level</label>
@@ -336,24 +423,23 @@ export default function CommissionManagement() {
 
               </form>
             </div>
-            
-            <div className="px-6 py-4 border-t border-slate-100 flex justify-end gap-3 bg-slate-50/50">
-              <button 
-                type="button" 
-                onClick={() => setIsModalOpen(false)}
-                className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-800"
-              >
-                Cancel
-              </button>
-              <button 
-                type="submit" 
-                form="commissionForm"
-                disabled={createMutation.isPending}
-                className="px-6 py-2 bg-slate-900 text-white rounded-lg text-sm font-medium hover:bg-slate-800 disabled:opacity-50"
-              >
-                {createMutation.isPending ? 'Saving...' : 'Save Agreement'}
-              </button>
-            </div>
+                        <div className="p-6 border-t border-slate-100 bg-slate-50 rounded-b-2xl flex justify-end gap-3 mt-auto">
+                <button
+                  type="button"
+                  onClick={() => setIsModalOpen(false)}
+                  className="px-5 py-2.5 text-sm font-medium text-slate-600 hover:text-slate-900 bg-white border border-slate-200 rounded-xl shadow-sm hover:bg-slate-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  form="commissionForm"
+                  disabled={createMutation.isPending || updateMutation.isPending}
+                  className="px-5 py-2.5 text-sm font-medium text-white bg-primary hover:bg-primary/90 rounded-xl shadow-sm transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {createMutation.isPending || updateMutation.isPending ? 'Saving...' : (editingId ? 'Update Agreement' : 'Save Agreement')}
+                </button>
+              </div>
           </div>
         </div>
       )}
