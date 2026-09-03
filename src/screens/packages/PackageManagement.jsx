@@ -3,7 +3,7 @@ import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import api from '@/api/client';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { Search, Filter, Loader2, Package as PackageIcon, Calendar } from 'lucide-react';
+import { Search, Loader2, Package as PackageIcon, Calendar, Plus } from 'lucide-react';
 
 const PackageManagement = () => {
   const [activeTab, setActiveTab] = useState('active'); // 'active' or 'past'
@@ -35,6 +35,13 @@ const PackageManagement = () => {
           <h1 className="text-2xl font-bold text-fg">All Service Packages</h1>
           <p className="text-fg/60 text-sm">Centralized view of all packages created across all operators.</p>
         </div>
+        <button 
+          onClick={() => navigate('/operators')}
+          className="btn-primary flex items-center"
+        >
+          <Plus className="w-5 h-5 mr-2" />
+          Create Package
+        </button>
       </div>
 
       <div className="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4 mb-6">
@@ -145,28 +152,32 @@ const PackageManagement = () => {
 
           {/* Pagination */}
           {meta.totalPages > 1 && (
-            <div className="p-4 border-t border-border flex justify-between items-center">
-              <button 
-                className="btn-outline px-4 py-2"
-                disabled={page === 1}
-                onClick={() => setPage(p => p - 1)}
-              >
-                Previous
-              </button>
-              <span className="text-sm font-medium text-fg/60">
-                Page {page} of {meta.totalPages}
-              </span>
-              <button 
-                className="btn-outline px-4 py-2"
-                disabled={page === meta.totalPages}
-                onClick={() => setPage(p => p + 1)}
-              >
-                Next
-              </button>
+            <div className="flex justify-between items-center mt-6 text-sm text-fg/60">
+              <div>
+                Showing {(page - 1) * limit + 1} to {Math.min(page * limit, meta.total)} of {meta.total} packages
+              </div>
+              <div className="flex space-x-2">
+                <button 
+                  className="btn btn-outline"
+                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                >
+                  Previous
+                </button>
+                <button 
+                  className="btn btn-outline"
+                  onClick={() => setPage(p => Math.min(meta.totalPages, p + 1))}
+                  disabled={page === meta.totalPages}
+                >
+                  Next
+                </button>
+              </div>
             </div>
           )}
         </div>
       )}
+
+
     </DashboardLayout>
   );
 };

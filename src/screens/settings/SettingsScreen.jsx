@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useAuth } from '@/context/AuthContext';
 import api from '@/api/client';
-import { Lock, User, Mail, Shield, ShieldAlert, CheckCircle2, Loader2, Save } from 'lucide-react';
+import { Lock, User, Mail, Shield, ShieldAlert, CheckCircle2, Loader2, Save, Settings, ToggleLeft, ToggleRight } from 'lucide-react';
 
 const SettingsScreen = () => {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
@@ -15,6 +17,30 @@ const SettingsScreen = () => {
     newPassword: '',
     confirmPassword: ''
   });
+
+  // Fetch remote config
+  const { data: configData, isLoading: isLoadingConfig } = useQuery({
+    queryKey: ['system-config'],
+    queryFn: () => api.get('/admin/customers/system/config').then(res => res.data),
+  });
+
+  // Mutation for updating features
+  const updateConfigMutation = useMutation({
+    mutationFn: (features) => api.patch('/admin/customers/system/config', { features }),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['system-config']);
+      setSuccess('Platform features updated successfully');
+      setTimeout(() => setSuccess(''), 3000);
+    },
+    onError: () => {
+      setError('Failed to update platform features');
+      setTimeout(() => setError(''), 3000);
+    }
+  });
+
+  const handleToggleFeature = (featureKey, currentValue) => {
+    updateConfigMutation.mutate({ [featureKey]: !currentValue });
+  };
 
   const handlePasswordChange = async (e) => {
     e.preventDefault();
@@ -85,6 +111,52 @@ const SettingsScreen = () => {
               </div>
             </div>
           </div>
+        </section>
+
+        {/* Platform Features Section */}
+        <section className="card">
+          <div className="flex items-center space-x-2 mb-6 text-fg">
+            <Settings className="w-5 h-5 text-primary" />
+            <h3 className="text-lg font-bold">Platform Features (Remote Config)</h3>
+          </div>
+
+          <p className="text-sm text-fg/60 mb-6">
+            Toggle features on or off globally. These changes take effect immediately on the mobile app.
+          </p>
+
+          {isLoadingConfig ? (
+            <div className="flex justify-center py-8"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
+          ) : (
+            <div className="space-y-4">
+              {[
+                { key: 'enableTravelFx', label: 'Travel FX', desc: 'Enable foreign exchange and currency swap features.' },
+                { key: 'enablePassportAssist', label: 'Passport Assist', desc: 'Enable passport application and renewal services.' },
+                { key: 'enableTravelDocs', label: 'Travel Documents', desc: 'Enable visa processing and travel document services.' },
+                { key: 'enableTargetSavings', label: 'Target Savings', desc: 'Enable user target savings plans for travel.' }
+              ].map((feature) => {
+                const isActive = configData?.data?.features?.[feature.key] || false;
+                return (
+                  <div key={feature.key} className="flex items-center justify-between p-4 bg-bg/50 rounded-xl border border-border">
+                    <div>
+                      <div className="font-bold text-fg">{feature.label}</div>
+                      <div className="text-xs text-fg/60 mt-1">{feature.desc}</div>
+                    </div>
+                    <button 
+                      onClick={() => handleToggleFeature(feature.key, isActive)}
+                      disabled={updateConfigMutation.isPending}
+                      className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${
+                        isActive ? 'bg-primary' : 'bg-fg/20'
+                      } ${updateConfigMutation.isPending ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    >
+                      <span className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${
+                        isActive ? 'translate-x-6' : 'translate-x-1'
+                      }`} />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </section>
 
         {/* Security Section */}

@@ -350,13 +350,14 @@ export default function CommissionManagement() {
                       <option value="PLATFORM">Platform Default</option>
                       <option value="OPERATOR">Specific Operator</option>
                       <option value="PACKAGE">Specific Package</option>
+                      <option value="ADDON">Specific Add-on</option>
                     </select>
                   </div>
                   
                   {formData.targetLevel !== 'PLATFORM' && (
                     <div>
                       <label className="block text-sm font-medium text-slate-700 mb-1">
-                        {formData.targetLevel === 'OPERATOR' ? 'Operator ID' : 'Package ID'}
+                        {formData.targetLevel === 'OPERATOR' ? 'Operator ID' : formData.targetLevel === 'PACKAGE' ? 'Package ID' : 'Add-on ID'}
                       </label>
                       <input 
                         type="text" 

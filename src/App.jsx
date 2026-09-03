@@ -143,6 +143,7 @@ import ExtensionsLibrary from '@/screens/extensions/ExtensionsLibrary';
 import UserManagement from '@/screens/users/UserManagement';
 import OperatorManagement from '@/screens/operators/OperatorManagement';
 import OperatorDetail from '@/screens/operators/OperatorDetail';
+import CreatePackagePage from '@/screens/operators/CreatePackagePage';
 import SettingsScreen from '@/screens/settings/SettingsScreen';
 import PaymentPlatformScreen from '@/screens/payments/PaymentPlatformScreen';
 import BroadcastMessenger from '@/screens/notifications/BroadcastMessenger';
@@ -156,8 +157,8 @@ import PromoManagement from '@/screens/promos/PromoManagement';
 import JourneyTrackerDashboard from '@/screens/bookings/JourneyTrackerDashboard';
 import ArchivedBookings from '@/screens/bookings/ArchivedBookings';
 
-import CustomerManagement from '@/screens/customers/CustomerManagement';
-import CustomerDetail from '@/screens/customers/CustomerDetail';
+// import CustomerManagement from '@/screens/customers/CustomerManagement';
+// import CustomerDetail from '@/screens/customers/CustomerDetail';
 
 import PackageManagement from '@/screens/packages/PackageManagement';
 import PackageDetail from '@/screens/packages/PackageDetail';
@@ -186,9 +187,10 @@ function App() {
               <Route path="/pta-batches" element={<BulkBatchManagement />} />
               <Route path="/extensions" element={<ExtensionsLibrary />} />
               <Route path="/users" element={<UserManagement />} />
-              <Route path="/customers" element={<CustomerManagement />} />
-              <Route path="/customers/:id" element={<CustomerDetail />} />
+              {/* <Route path="/customers" element={<CustomerManagement />} />
+              <Route path="/customers/:id" element={<CustomerDetail />} /> */}
               <Route path="/operators" element={<OperatorManagement />} />
+              <Route path="/operators/:id/create-package" element={<CreatePackagePage />} />
               <Route path="/operators/:id" element={<OperatorDetail />} />
               <Route path="/packages" element={<PackageManagement />} />
               <Route path="/packages/:id" element={<PackageDetail />} />

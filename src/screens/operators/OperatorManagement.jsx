@@ -3,8 +3,25 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import api from '@/api/client';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { UserPlus, Trash2, Edit2, Mail, Loader2, Search, Filter, ShieldCheck } from 'lucide-react';
+import { UserPlus, Loader2, Search, Eye, Edit2, MoreVertical, ChevronLeft, ChevronRight } from 'lucide-react';
 import { InviteModal } from '@/screens/users/UserManagement';
+
+const STATUS_CONFIG = {
+  approved: { label: 'Approved', dot: 'bg-emerald-500', bg: 'bg-emerald-50', text: 'text-emerald-700' },
+  pending: { label: 'Pending', dot: 'bg-amber-500', bg: 'bg-amber-50', text: 'text-amber-700' },
+  under_review: { label: 'Under Review', dot: 'bg-blue-500', bg: 'bg-blue-50', text: 'text-blue-700' },
+  rejected: { label: 'Rejected', dot: 'bg-red-500', bg: 'bg-red-50', text: 'text-red-700' },
+};
+
+const StatusBadge = ({ status }) => {
+  const config = STATUS_CONFIG[status] || STATUS_CONFIG.pending;
+  return (
+    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${config.bg} ${config.text}`}>
+      <span className={`w-1.5 h-1.5 rounded-full ${config.dot}`} />
+      {config.label}
+    </span>
+  );
+};
 
 const EditOperatorModal = ({ operator, onClose, onSuccess }) => {
   const [formData, setFormData] = useState({
@@ -23,12 +40,12 @@ const EditOperatorModal = ({ operator, onClose, onSuccess }) => {
   });
 
   return (
-    <div className="fixed inset-0 bg-bg/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-bg border border-border w-full max-w-lg rounded-3xl p-8 shadow-2xl">
-        <h2 className="text-2xl font-bold mb-6">Edit Operator Details</h2>
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-white border border-border w-full max-w-lg rounded-2xl p-8 shadow-2xl">
+        <h2 className="text-xl font-bold mb-6 text-fg">Edit Operator Details</h2>
         <div className="space-y-4">
           <div>
-            <label className="block text-xs font-bold text-fg/40 mb-1">Company Name</label>
+            <label className="block text-xs font-semibold text-fg/50 uppercase tracking-wider mb-1.5">Company Name</label>
             <input 
               className="input" 
               value={formData.companyName} 
@@ -36,7 +53,7 @@ const EditOperatorModal = ({ operator, onClose, onSuccess }) => {
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-fg/40 mb-1">Verification Status</label>
+            <label className="block text-xs font-semibold text-fg/50 uppercase tracking-wider mb-1.5">Verification Status</label>
             <select 
               className="input" 
               value={formData.verificationStatus} 
@@ -68,17 +85,16 @@ const OperatorManagement = () => {
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [selectedOperator, setSelectedOperator] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
   const navigate = useNavigate();
-
   const queryClient = useQueryClient();
 
-  // Fetch Operators
   const { data: operators, isLoading } = useQuery({
     queryKey: ['operators'],
     queryFn: () => api.get('/admin/operator-auth/operators').then(res => res.data)
   });
 
-  // Delete Mutation
   const deleteMutation = useMutation({
     mutationFn: (id) => api.delete(`/admin/operator-auth/users/${id}`),
     onSuccess: () => {
@@ -87,84 +103,155 @@ const OperatorManagement = () => {
     }
   });
 
+  // Filter operators
+  const filtered = (operators || []).filter(op => {
+    const matchSearch = !search || 
+      op.companyName?.toLowerCase().includes(search.toLowerCase()) ||
+      op.email?.toLowerCase().includes(search.toLowerCase());
+    const matchStatus = statusFilter === 'all' || op.verificationStatus === statusFilter;
+    return matchSearch && matchStatus;
+  });
+
   return (
-    <DashboardLayout title="Operator Ecosystem">
-      <div className="flex justify-between items-center mb-8">
-        <div>
-          <h1 className="text-2xl font-bold text-fg">Registered Hajj/Umrah Operators</h1>
-          <p className="text-fg/60 text-sm">Onboard new operators and manage their verification status.</p>
+    <DashboardLayout title="Operators">
+      {/* Page Header */}
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold text-fg tracking-tight">Operators</h1>
+      </div>
+
+      {/* Filters Row */}
+      <div className="flex flex-col sm:flex-row gap-3 mb-6">
+        <div className="relative flex-1">
+          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-fg/30" />
+          <input 
+            type="text" 
+            placeholder="Account, operator, email..." 
+            className="input pl-10 text-sm"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
         </div>
+        <select 
+          className="input w-auto min-w-[160px] text-sm"
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+        >
+          <option value="all">All statuses</option>
+          <option value="approved">Approved</option>
+          <option value="pending">Pending</option>
+          <option value="under_review">Under Review</option>
+          <option value="rejected">Rejected</option>
+        </select>
         <button 
           onClick={() => setShowInviteModal(true)}
-          className="btn-primary flex items-center"
+          className="btn-primary flex items-center text-sm whitespace-nowrap"
         >
-          <UserPlus className="w-5 h-5 mr-2" />
+          <UserPlus className="w-4 h-4 mr-2" />
           Onboard Operator
         </button>
       </div>
 
-      <div className="flex space-x-4 mb-6">
-        <div className="relative flex-1">
-          <Search className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-fg/30" />
-          <input type="text" placeholder="Search by operator name, email, or CAC number..." className="input pl-10" />
-        </div>
-        <button className="btn-outline flex items-center">
-            <Filter className="w-4 h-4 mr-2" />
-            Verification Status
-        </button>
-      </div>
-
+      {/* Table */}
       {isLoading ? (
-        <div className="flex justify-center py-20"><Loader2 className="w-10 h-10 animate-spin text-primary" /></div>
+        <div className="flex justify-center py-20">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {operators?.map((op) => (
-            <div key={op.id} className="card group hover:border-primary/50 transition-all">
-              <div className="flex justify-between items-start mb-6">
-                <div className="w-14 h-14 rounded-2xl bg-accent/10 flex items-center justify-center text-accent font-bold text-xl">
-                    {op.companyName.charAt(0)}
-                </div>
-                <div className="flex items-center space-x-1">
-                  {op.verificationStatus === 'approved' && (
-                    <span className="px-2 py-1 bg-accent/10 text-accent text-[10px] font-bold rounded-lg uppercase tracking-wider flex items-center">
-                        <ShieldCheck className="w-3 h-3 mr-1" /> Verified
-                    </span>
-                  )}
-                  <button 
-                    onClick={() => { setSelectedOperator(op); setIsEditing(true); }}
-                    className="p-2 hover:bg-bg rounded-lg text-fg/40 hover:text-primary transition-colors"
+        <div className="bg-white border border-border rounded-xl overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-border">
+                  <th className="text-left px-5 py-4 text-[11px] font-bold text-fg/50 uppercase tracking-wider">No</th>
+                  <th className="text-left px-5 py-4 text-[11px] font-bold text-fg/50 uppercase tracking-wider">Company</th>
+                  <th className="text-left px-5 py-4 text-[11px] font-bold text-fg/50 uppercase tracking-wider">Verification</th>
+                  <th className="text-left px-5 py-4 text-[11px] font-bold text-fg/50 uppercase tracking-wider">Email</th>
+                  <th className="text-left px-5 py-4 text-[11px] font-bold text-fg/50 uppercase tracking-wider">Phone</th>
+                  <th className="text-left px-5 py-4 text-[11px] font-bold text-fg/50 uppercase tracking-wider">Joined</th>
+                  <th className="text-left px-5 py-4 text-[11px] font-bold text-fg/50 uppercase tracking-wider">Last Activity</th>
+                  <th className="text-right px-5 py-4 text-[11px] font-bold text-fg/50 uppercase tracking-wider">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border/60">
+                {filtered.map((op, index) => (
+                  <tr 
+                    key={op.id} 
+                    className="hover:bg-gray-50/80 transition-colors cursor-pointer group"
+                    onClick={() => navigate(`/operators/${op.id}`)}
                   >
-                    <Edit2 className="w-4 h-4" />
-                  </button>
-                  <button 
-                    onClick={() => window.confirm('Delete this operator?') && deleteMutation.mutate(op.id)}
-                    className="p-2 hover:bg-bg rounded-lg text-fg/40 hover:text-red-500 transition-colors"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
+                    <td className="px-5 py-4 text-sm text-fg/60 font-mono">{String(index + 1).padStart(2, '0')}</td>
+                    <td className="px-5 py-4">
+                      <span className="text-sm font-semibold text-fg">{op.companyName}</span>
+                    </td>
+                    <td className="px-5 py-4">
+                      <StatusBadge status={op.verificationStatus} />
+                    </td>
+                    <td className="px-5 py-4 text-sm text-fg/70">{op.email}</td>
+                    <td className="px-5 py-4 text-sm text-fg/70">{op.phone || '—'}</td>
+                    <td className="px-5 py-4 text-sm text-fg/70">
+                      {new Date(op.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                    </td>
+                    <td className="px-5 py-4 text-sm text-fg/70">
+                      {op.lastLoginAt 
+                        ? new Date(op.lastLoginAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+                        : '—'
+                      }
+                    </td>
+                    <td className="px-5 py-4">
+                      <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
+                        <button 
+                          onClick={() => navigate(`/operators/${op.id}`)}
+                          className="p-2 rounded-lg text-fg/40 hover:text-fg hover:bg-gray-100 transition-colors"
+                          title="View"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                        <button 
+                          onClick={() => { setSelectedOperator(op); setIsEditing(true); }}
+                          className="p-2 rounded-lg text-fg/40 hover:text-fg hover:bg-gray-100 transition-colors"
+                          title="Edit"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </button>
+                        <button 
+                          className="p-2 rounded-lg text-fg/40 hover:text-fg hover:bg-gray-100 transition-colors"
+                          title="More"
+                        >
+                          <MoreVertical className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
 
-              <h3 className="font-bold text-lg mb-1 leading-tight">{op.companyName}</h3>
-              <div className="text-sm text-fg/40 flex items-center mb-4">
-                <Mail className="w-3 h-3 mr-1" /> {op.email}
-              </div>
-
-              <div className="space-y-4 pt-4 border-t border-border">
-                <div className="flex justify-between items-center text-sm">
-                  <span className="text-fg/40 font-medium">Joined:</span>
-                  <span className="font-bold text-fg/80">{new Date(op.createdAt).toLocaleDateString()}</span>
-                </div>
-              </div>
-
-              <button 
-                onClick={() => navigate(`/operators/${op.id}`)}
-                className="w-full mt-6 py-2 bg-primary/10 text-primary font-bold rounded-xl hover:bg-primary hover:text-secondary transition-all text-sm"
-              >
-                View Full Dossier
-              </button>
+          {filtered.length === 0 && (
+            <div className="py-16 text-center text-fg/40 text-sm">
+              No operators found matching your criteria.
             </div>
-          ))}
+          )}
+
+          {/* Pagination */}
+          {filtered.length > 0 && (
+            <div className="px-5 py-4 border-t border-border flex items-center justify-between">
+              <span className="text-sm text-fg/50">
+                Showing results 1 - {filtered.length} of {filtered.length}
+              </span>
+              <div className="flex items-center gap-1">
+                <button className="px-3 py-1.5 text-sm text-fg/50 border border-border rounded-lg hover:bg-gray-50 transition-colors" disabled>
+                  Previous page
+                </button>
+                <button className="w-8 h-8 text-sm font-semibold rounded-lg bg-secondary text-white flex items-center justify-center">
+                  1
+                </button>
+                <button className="px-3 py-1.5 text-sm text-fg/50 border border-border rounded-lg hover:bg-gray-50 transition-colors" disabled>
+                  Next Page
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -177,7 +264,6 @@ const OperatorManagement = () => {
           onSuccess={() => queryClient.invalidateQueries(['operators'])}
         />
       )}
-
     </DashboardLayout>
   );
 };

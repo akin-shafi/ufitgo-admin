@@ -33,7 +33,7 @@ const navigation = [
     name: 'Users & Partners',
     icon: Users,
     children: [
-      { name: 'Customers', href: '/customers', icon: Users },
+     
       { name: 'Operators', href: '/operators', icon: Briefcase },
       { name: 'Platform Admins', href: '/users', icon: ShieldCheck },
       { name: 'KYC Verification', href: '/kyc-verifications', icon: CheckCircle },
@@ -99,10 +99,7 @@ const NavItem = ({ item }) => {
       case '/packages':
         queryClient.prefetchQuery({ queryKey: ['admin-packages', 1, '', 'active'], queryFn: () => api.get('/admin/operator-auth/packages', { params: { page: 1, limit: 10, search: '', status: 'active' } }).then(res => res.data) });
         break;
-      case '/customers':
-        queryClient.prefetchQuery({ queryKey: ['customers', 1, 10, '', '', ''], queryFn: () => api.get('/admin/customers?page=1&limit=10').then(res => res.data) });
-        break;
-      // More can be added seamlessly
+     
     }
   };
 
