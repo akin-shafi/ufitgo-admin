@@ -139,6 +139,25 @@ const PackageDetail = () => {
         </div>
       </div>
 
+      {pkg.tiers && pkg.tiers.length > 0 && (
+        <div className="bg-bg border border-border rounded-2xl p-6 mb-8 shadow-sm">
+          <h2 className="text-xl font-bold text-fg mb-4 flex items-center">
+            <PackageIcon className="w-5 h-5 text-primary mr-2" />
+            Package Tiers
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {pkg.tiers.map((tier) => (
+              <div key={tier.id} className="border border-border rounded-xl p-4 bg-card">
+                <div className="flex justify-between items-start mb-2">
+                  <h3 className="font-bold text-fg">{tier.name}</h3>
+                </div>
+                <p className="text-xl font-bold text-primary">₦{Number(tier.price).toLocaleString()}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="bg-bg border border-border rounded-2xl p-6 mb-8 shadow-sm">
         <h2 className="text-xl font-bold text-fg mb-4 flex items-center">
           <Percent className="w-5 h-5 text-primary mr-2" />

@@ -1,17 +1,25 @@
 import React from 'react';
 import { Sidebar } from '@/components/layout/Sidebar';
-import { Bell, Search, User } from 'lucide-react';
+import { Bell, Search, User, Menu } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 
-export const Header = ({ title }) => {
+export const Header = ({ title, toggleSidebar }) => {
   const { user } = useAuth();
   
   return (
     <header className="h-16 flex items-center justify-between px-8 bg-card border-b border-border sticky top-0 z-30">
-      <h2 className="text-xl font-bold">{title}</h2>
+      <div className="flex items-center space-x-4">
+        <button 
+          onClick={toggleSidebar}
+          className="lg:hidden p-2 hover:bg-bg rounded-xl transition-colors"
+        >
+          <Menu className="w-5 h-5" />
+        </button>
+        <h2 className="text-xl font-bold hidden sm:block">{title}</h2>
+      </div>
       
-      <div className="flex items-center space-x-6">
+      <div className="flex items-center space-x-4 sm:space-x-6">
         <div className="relative group">
           <Search className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-fg/40 group-focus-within:text-primary transition-colors" />
           <input 
@@ -45,12 +53,16 @@ export const Header = ({ title }) => {
 };
 
 export const DashboardLayout = ({ children, title }) => {
+  const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
+
+  const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
+
   return (
     <div className="min-h-screen">
-      <Sidebar />
-      <div className="pl-64">
-        <Header title={title} />
-        <main className="p-8">
+      <Sidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
+      <div className="lg:pl-64 transition-all duration-300">
+        <Header title={title} toggleSidebar={toggleSidebar} isSidebarOpen={isSidebarOpen} />
+        <main className="p-4 sm:p-8">
           {children}
         </main>
       </div>

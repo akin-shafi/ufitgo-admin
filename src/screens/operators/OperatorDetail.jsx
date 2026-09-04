@@ -103,7 +103,10 @@ const OperatorDetail = () => {
           <div>
             <h1 className="text-xl md:text-2xl font-bold text-white tracking-tight">{operator.companyName}</h1>
             <div className="flex items-center gap-3 mt-1.5 flex-wrap">
-              <span className="text-white/50 text-sm font-mono">ID: {operator.id?.slice(0, 8)}</span>
+              <span className="text-white/50 text-sm font-mono">
+                ID: {String(operator.id)?.slice(0, 8)}
+              </span>
+
               {/* Verification Badge */}
               <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-white/10 ${verificationConfig.text}`}>
                 <span className={`w-1.5 h-1.5 rounded-full ${verificationConfig.dot}`} />

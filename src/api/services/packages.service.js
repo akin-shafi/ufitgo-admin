@@ -37,4 +37,9 @@ export const packagesService = {
     const res = await api.post('/admin/operator-auth/packages/suggest', data);
     return res.data;
   },
+
+  updateTiers: async (id, tiers) => {
+    const res = await api.put(`/admin/operator-auth/packages/${id}/tiers`, { tiers });
+    return res.data;
+  },
 };

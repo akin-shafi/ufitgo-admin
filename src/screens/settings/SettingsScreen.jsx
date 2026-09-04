@@ -127,34 +127,78 @@ const SettingsScreen = () => {
           {isLoadingConfig ? (
             <div className="flex justify-center py-8"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
           ) : (
-            <div className="space-y-4">
-              {[
-                { key: 'enableTravelFx', label: 'Travel FX', desc: 'Enable foreign exchange and currency swap features.' },
-                { key: 'enablePassportAssist', label: 'Passport Assist', desc: 'Enable passport application and renewal services.' },
-                { key: 'enableTravelDocs', label: 'Travel Documents', desc: 'Enable visa processing and travel document services.' },
-                { key: 'enableTargetSavings', label: 'Target Savings', desc: 'Enable user target savings plans for travel.' }
-              ].map((feature) => {
-                const isActive = configData?.data?.features?.[feature.key] || false;
-                return (
-                  <div key={feature.key} className="flex items-center justify-between p-4 bg-bg/50 rounded-xl border border-border">
-                    <div>
-                      <div className="font-bold text-fg">{feature.label}</div>
-                      <div className="text-xs text-fg/60 mt-1">{feature.desc}</div>
+            <div className="space-y-6">
+              <div className="space-y-4">
+                {[
+                  { key: 'enableTravelFx', label: 'Travel FX', desc: 'Enable foreign exchange and currency swap features.' },
+                  { key: 'enablePassportAssist', label: 'Passport Assist', desc: 'Enable passport application and renewal services.' },
+                  { key: 'enableTravelDocs', label: 'Travel Documents', desc: 'Enable visa processing and travel document services.' },
+                  { key: 'enableTargetSavings', label: 'Target Savings', desc: 'Enable user target savings plans for travel.' }
+                ].map((feature) => {
+                  const isActive = configData?.data?.features?.[feature.key] || false;
+                  return (
+                    <div key={feature.key} className="flex items-center justify-between p-4 bg-bg/50 rounded-xl border border-border">
+                      <div>
+                        <div className="font-bold text-fg">{feature.label}</div>
+                        <div className="text-xs text-fg/60 mt-1">{feature.desc}</div>
+                      </div>
+                      <button 
+                        onClick={() => handleToggleFeature(feature.key, isActive)}
+                        disabled={updateConfigMutation.isPending}
+                        className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${
+                          isActive ? 'bg-primary' : 'bg-fg/20'
+                        } ${updateConfigMutation.isPending ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      >
+                        <span className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${
+                          isActive ? 'translate-x-6' : 'translate-x-1'
+                        }`} />
+                      </button>
                     </div>
-                    <button 
-                      onClick={() => handleToggleFeature(feature.key, isActive)}
-                      disabled={updateConfigMutation.isPending}
-                      className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${
-                        isActive ? 'bg-primary' : 'bg-fg/20'
-                      } ${updateConfigMutation.isPending ? 'opacity-50 cursor-not-allowed' : ''}`}
-                    >
-                      <span className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${
-                        isActive ? 'translate-x-6' : 'translate-x-1'
-                      }`} />
-                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="pt-4 border-t border-border">
+                <h4 className="text-md font-bold mb-4">Fees & Penalties</h4>
+                <div className="flex items-center justify-between p-4 bg-bg/50 rounded-xl border border-border">
+                  <div className="w-2/3">
+                    <div className="font-bold text-fg">Savings Break Penalty</div>
+                    <div className="text-xs text-fg/60 mt-1">Percentage applied when a user breaks their savings goal before the target date.</div>
                   </div>
-                );
-              })}
+                  <div className="w-1/3 flex items-center gap-2">
+                    {/* <input 
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      max="100"
+                      className="input py-1 text-sm text-right flex-1"
+                      defaultValue={(configData?.data?.fees?.savingsBreakPenaltyPercent * 100).toFixed(2) || '90.00'}
+                      onBlur={(e) => {
+                        
+                        const val = parseFloat(e.target.value);
+                        if (!isNaN(val)) {
+                          updateConfigMutation.mutate({ fees: { savingsBreakPenaltyPercent: val / 100 } });
+                        }
+                      }}
+                    /> */}
+                    <input 
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      max="100"
+                      className="input py-1 text-sm text-right flex-1"
+                      defaultValue={Number(configData?.data?.fees?.savingsBreakPenaltyPercent ?? 0.9).toFixed(2)}
+                      onBlur={(e) => {
+                        const val = parseFloat(e.target.value);
+                        if (!isNaN(val)) {
+                          updateConfigMutation.mutate({ fees: { savingsBreakPenaltyPercent: val } });
+                        }
+                      }}
+                    />
+                    <span className="text-sm font-bold">%</span>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
         </section>

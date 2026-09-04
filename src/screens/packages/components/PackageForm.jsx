@@ -41,6 +41,7 @@ export const PackageForm = ({ initialData, onSubmit, onCancel }) => {
       child: initialData?.prices?.child || "",
       individual: initialData?.prices?.individual || "",
     },
+    tiers: initialData?.tiers || [],
 
     departureDate: initialData?.departureDate || "",
     returnDate: initialData?.returnDate || "",
@@ -168,6 +169,28 @@ export const PackageForm = ({ initialData, onSubmit, onCancel }) => {
     })
   }
 
+  const addTier = () => {
+    setFormData((prev) => ({
+      ...prev,
+      tiers: [...prev.tiers, { name: "", price: "", serviceLevel: "standard" }]
+    }))
+  }
+
+  const removeTier = (index) => {
+    setFormData((prev) => ({
+      ...prev,
+      tiers: prev.tiers.filter((_, i) => i !== index)
+    }))
+  }
+
+  const updateTier = (index, field, value) => {
+    setFormData((prev) => {
+      const newTiers = [...prev.tiers]
+      newTiers[index] = { ...newTiers[index], [field]: value }
+      return { ...prev, tiers: newTiers }
+    })
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (!installmentValid || totalPrice === 0) return
@@ -188,6 +211,10 @@ export const PackageForm = ({ initialData, onSubmit, onCancel }) => {
       groupDiscountThreshold: formData.groupDiscountEnabled ? Number(formData.groupDiscountThreshold) : null,
       groupDiscountPercentage: formData.groupDiscountEnabled ? Number(formData.groupDiscountPercentage) : null,
       extensionIds: formData.extensionIds,
+      tiers: formData.tiers.map(t => ({
+        ...t,
+        price: Number(t.price)
+      })),
     })
   }
 
@@ -327,7 +354,7 @@ export const PackageForm = ({ initialData, onSubmit, onCancel }) => {
             {formData.isGroupPackage ? (
               <>
                 <Input
-                  label="Price per Adult (₦)"
+                  label="Base Price per Adult (₦)"
                   type="number"
                   value={formData.prices.adult}
                   onChange={(e) => handlePriceChange("adult", e.target.value)}
@@ -344,7 +371,7 @@ export const PackageForm = ({ initialData, onSubmit, onCancel }) => {
               </>
             ) : (
               <Input
-                label="Price per Person (₦)"
+                label="Base Price per Person (₦)"
                 type="number"
                 value={formData.prices.individual}
                 onChange={(e) => handlePriceChange("individual", e.target.value)}
@@ -352,6 +379,52 @@ export const PackageForm = ({ initialData, onSubmit, onCancel }) => {
                 required
               />
             )}
+            
+            <div className="mt-8 border-t border-border pt-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-md font-semibold text-fg">Package Tiers (Variants)</h3>
+                <Button type="button" variant="outline" onClick={addTier} size="sm">
+                  + Add Tier
+                </Button>
+              </div>
+              <p className="text-sm text-fg/60 mb-4">Add specific tiers like Standard, Executive, or Premium with different pricing.</p>
+              
+              <div className="space-y-4">
+                {formData.tiers.map((tier, idx) => (
+                  <div key={idx} className="bg-bg/50 border border-border rounded-xl p-4 relative group">
+                    <button 
+                      type="button" 
+                      onClick={() => removeTier(idx)}
+                      className="absolute top-2 right-2 w-6 h-6 rounded-full bg-red-500/10 text-red-500 flex items-center justify-center opacity-0 group-hover:opacity-100 transition"
+                    >
+                      &times;
+                    </button>
+                    <div className="grid grid-cols-2 gap-4">
+                      <Input 
+                        label="Tier Name" 
+                        value={tier.name} 
+                        onChange={(e) => updateTier(idx, "name", e.target.value)}
+                        placeholder="e.g Premium Package" 
+                        required
+                      />
+                      <Input 
+                        label="Price (₦)" 
+                        type="number"
+                        value={tier.price} 
+                        onChange={(e) => updateTier(idx, "price", e.target.value)}
+                        placeholder="e.g 9150000" 
+                        required
+                      />
+                    </div>
+                  </div>
+                ))}
+                {formData.tiers.length === 0 && (
+                  <div className="text-center py-6 border-2 border-dashed border-border rounded-xl">
+                    <p className="text-sm text-fg/60">No tiers added. Base price will be used.</p>
+                  </div>
+                )}
+              </div>
+            </div>
           </section>
 
           {/* Installments */}

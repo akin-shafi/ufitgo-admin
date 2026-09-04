@@ -21,7 +21,8 @@ import {
   Briefcase,
   Activity,
   Package,
-  Mail
+  Mail,
+  X // <--- Added here
 } from 'lucide-react';
 
 import { useAuth } from '@/context/AuthContext';
@@ -160,16 +161,32 @@ const NavItem = ({ item }) => {
   );
 };
 
-export const Sidebar = () => {
+export const Sidebar = ({ isOpen, setIsOpen }) => {
   const { logout } = useAuth();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   return (
     <>
-      <aside className="fixed top-0 left-0 z-40 w-64 h-screen bg-secondary border-r border-white/5 transition-transform translate-x-0 flex flex-col">
-        <div className="px-6 py-6 mb-2">
-          <h1 className="text-2xl font-bold text-primary">UfitGo Admin</h1>
-          <p className="text-xs text-white/50 mt-1">Platform Governance</p>
+      {/* Mobile Overlay */}
+      {isOpen && (
+        <div 
+          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden"
+          onClick={() => setIsOpen(false)}
+        />
+      )}
+
+      <aside className={`fixed top-0 left-0 z-50 w-64 h-screen bg-secondary border-r border-white/5 transition-transform duration-300 flex flex-col ${isOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}>
+        <div className="px-6 py-6 mb-2 flex justify-between items-center">
+          <div>
+            <h1 className="text-2xl font-bold text-primary">UfitGo Admin</h1>
+            <p className="text-xs text-white/50 mt-1">Platform Governance</p>
+          </div>
+          <button 
+            className="lg:hidden p-2 text-white/70 hover:text-white"
+            onClick={() => setIsOpen(false)}
+          >
+            <X className="w-6 h-6" />
+          </button>
         </div>
 
         <nav className="flex-1 px-3 overflow-y-auto custom-scrollbar">

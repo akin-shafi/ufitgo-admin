@@ -86,6 +86,12 @@ export const usePackages = () => {
     return updated
   }
 
+  const updateTiers = async (id, tiers) => {
+    const updated = await packagesService.updateTiers(id, tiers)
+    setPackages((prev) => prev.map((pkg) => (pkg.id === id ? updated.data : pkg)))
+    return updated.data
+  }
+
   const deletePackage = async (id) => {
     await packagesService.delete(id)
     setPackages((prev) => prev.filter((pkg) => pkg.id !== id))
@@ -116,6 +122,7 @@ export const usePackages = () => {
     fetchMetadata,
     createPackage,
     updatePackage,
+    updateTiers,
     deletePackage,
     suggestPackageContent, // ← Now properly exposed
   }

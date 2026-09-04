@@ -24,24 +24,64 @@ const StatusBadge = ({ status }) => {
 };
 
 const EditOperatorModal = ({ operator, onClose, onSuccess }) => {
+  const [errorMessage, setErrorMessage] = useState('');
   const [formData, setFormData] = useState({
-    companyName: operator.companyName,
-    email: operator.email,
+    companyName: operator.companyName || '',
+    tradingName: operator.tradingName || '',
+    email: operator.email || '',
     phone: operator.phone || '',
+    whatsappNumber: operator.whatsappNumber || '',
+    address: operator.address || '',
+    location: operator.location || '',
+    country: operator.country || '',
+    description: operator.description || '',
     verificationStatus: operator.verificationStatus,
   });
 
+  const getErrorMessage = (error) => {
+    const data = error?.response?.data;
+    if (Array.isArray(data?.message)) {
+      return data.message.join(', ');
+    }
+    if (typeof data?.message === 'string') {
+      return data.message;
+    }
+    if (typeof data?.error === 'string') {
+      return data.error;
+    }
+    if (typeof error?.message === 'string') {
+      return error.message;
+    }
+    return 'Failed to update operator. Please try again.';
+  };
+
   const mutation = useMutation({
-    mutationFn: (data) => api.put(`/admin/operator-auth/users/${operator.id}`, data),
+    mutationFn: (data) =>
+      api.put(`/admin/operator-auth/users/${operator.id}`, {
+        companyName: data.companyName,
+        tradingName: data.tradingName,
+        email: data.email,
+        phone: data.phone,
+        whatsappNumber: data.whatsappNumber,
+        address: data.address,
+        location: data.location,
+        country: data.country,
+        description: data.description,
+        verificationStatus: data.verificationStatus,
+      }),
     onSuccess: () => {
+      setErrorMessage('');
       onSuccess();
       onClose();
-    }
+    },
+    onError: (error) => {
+      setErrorMessage(getErrorMessage(error));
+    },
   });
 
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white border border-border w-full max-w-lg rounded-2xl p-8 shadow-2xl">
+      <div className="bg-white border border-border w-full max-w-2xl rounded-2xl p-8 shadow-2xl max-h-[90vh] overflow-y-auto">
         <h2 className="text-xl font-bold mb-6 text-fg">Edit Operator Details</h2>
         <div className="space-y-4">
           <div>
@@ -50,6 +90,75 @@ const EditOperatorModal = ({ operator, onClose, onSuccess }) => {
               className="input" 
               value={formData.companyName} 
               onChange={e => setFormData({...formData, companyName: e.target.value})}
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-fg/50 uppercase tracking-wider mb-1.5">Trading Name</label>
+            <input 
+              className="input" 
+              value={formData.tradingName}
+              onChange={e => setFormData({...formData, tradingName: e.target.value})}
+            />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-fg/50 uppercase tracking-wider mb-1.5">Email</label>
+              <input 
+                type="email"
+                className="input" 
+                value={formData.email}
+                onChange={e => setFormData({...formData, email: e.target.value})}
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-fg/50 uppercase tracking-wider mb-1.5">Phone</label>
+              <input 
+                className="input" 
+                value={formData.phone}
+                onChange={e => setFormData({...formData, phone: e.target.value})}
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-fg/50 uppercase tracking-wider mb-1.5">WhatsApp Number</label>
+            <input 
+              className="input" 
+              value={formData.whatsappNumber}
+              onChange={e => setFormData({...formData, whatsappNumber: e.target.value})}
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-fg/50 uppercase tracking-wider mb-1.5">Address</label>
+            <input 
+              className="input" 
+              value={formData.address}
+              onChange={e => setFormData({...formData, address: e.target.value})}
+            />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-fg/50 uppercase tracking-wider mb-1.5">City / Location</label>
+              <input 
+                className="input" 
+                value={formData.location}
+                onChange={e => setFormData({...formData, location: e.target.value})}
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-fg/50 uppercase tracking-wider mb-1.5">Country</label>
+              <input 
+                className="input" 
+                value={formData.country}
+                onChange={e => setFormData({...formData, country: e.target.value})}
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-fg/50 uppercase tracking-wider mb-1.5">Description</label>
+            <textarea 
+              className="input min-h-[90px]"
+              value={formData.description}
+              onChange={e => setFormData({...formData, description: e.target.value})}
             />
           </div>
           <div>
@@ -68,13 +177,21 @@ const EditOperatorModal = ({ operator, onClose, onSuccess }) => {
           <div className="flex space-x-3 pt-6">
             <button onClick={onClose} className="flex-1 btn-outline">Cancel</button>
             <button 
-              onClick={() => mutation.mutate(formData)}
+              onClick={() => {
+                setErrorMessage('');
+                mutation.mutate(formData);
+              }}
               disabled={mutation.isPending}
               className="flex-1 btn-primary"
             >
               {mutation.isPending ? 'Saving...' : 'Update Operator'}
             </button>
           </div>
+          {errorMessage && (
+            <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+              {errorMessage}
+            </p>
+          )}
         </div>
       </div>
     </div>
