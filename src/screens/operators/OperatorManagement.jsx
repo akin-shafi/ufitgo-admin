@@ -212,13 +212,13 @@ const OperatorManagement = () => {
     queryFn: () => api.get('/admin/operator-auth/operators').then(res => res.data)
   });
 
-  const deleteMutation = useMutation({
-    mutationFn: (id) => api.delete(`/admin/operator-auth/users/${id}`),
-    onSuccess: () => {
-      queryClient.invalidateQueries(['operators']);
-      alert('Operator account revoked successfully');
-    }
-  });
+  // const deleteMutation = useMutation({
+  //   mutationFn: (id) => api.delete(`/admin/operator-auth/users/${id}`),
+  //   onSuccess: () => {
+  //     queryClient.invalidateQueries(['operators']);
+  //     alert('Operator account revoked successfully');
+  //   }
+  // });
 
   // Filter operators
   const filtered = (operators || []).filter(op => {
