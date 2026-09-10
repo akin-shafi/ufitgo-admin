@@ -22,7 +22,8 @@ import {
   Activity,
   Package,
   Mail,
-  X // <--- Added here
+  X, // <--- Added here
+  PiggyBank
 } from 'lucide-react';
 
 import { useAuth } from '@/context/AuthContext';
@@ -57,6 +58,7 @@ const navigation = [
     children: [
       { name: 'Service Packages', href: '/packages', icon: Package },
       { name: 'Journey Tracker', href: '/journey-tracker', icon: Map },
+      { name: 'Savings Tracker', href: '/savings-tracker', icon: PiggyBank },
       { name: 'Archived Bookings', href: '/archived-bookings', icon: Map },
       { name: 'Compliance & Escrow', href: '/compliance-escrow', icon: ShieldCheck, visible: isFeatureEnabled('ESCROW_DASHBOARD') },
     ]

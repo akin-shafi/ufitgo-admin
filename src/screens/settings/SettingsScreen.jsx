@@ -166,21 +166,6 @@ const SettingsScreen = () => {
                     <div className="text-xs text-fg/60 mt-1">Percentage applied when a user breaks their savings goal before the target date.</div>
                   </div>
                   <div className="w-1/3 flex items-center gap-2">
-                    {/* <input 
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      max="100"
-                      className="input py-1 text-sm text-right flex-1"
-                      defaultValue={(configData?.data?.fees?.savingsBreakPenaltyPercent * 100).toFixed(2) || '90.00'}
-                      onBlur={(e) => {
-                        
-                        const val = parseFloat(e.target.value);
-                        if (!isNaN(val)) {
-                          updateConfigMutation.mutate({ fees: { savingsBreakPenaltyPercent: val / 100 } });
-                        }
-                      }}
-                    /> */}
                     <input 
                       type="number"
                       step="0.01"
@@ -196,6 +181,57 @@ const SettingsScreen = () => {
                       }}
                     />
                     <span className="text-sm font-bold">%</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-border mt-6">
+                <h4 className="text-md font-bold mb-4">Savings Automation Rules</h4>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-4 bg-bg/50 rounded-xl border border-border">
+                    <div className="w-2/3">
+                      <div className="font-bold text-fg">Missed Payment Grace Period</div>
+                      <div className="text-xs text-fg/60 mt-1">Days before a missed savings milestone is flagged for restructuring.</div>
+                    </div>
+                    <div className="w-1/3 flex items-center gap-2">
+                      <input 
+                        type="number"
+                        min="1"
+                        max="30"
+                        className="input py-1 text-sm text-right flex-1"
+                        defaultValue={Number(configData?.data?.savingsConfig?.gracePeriodDays ?? 3)}
+                        onBlur={(e) => {
+                          const val = parseInt(e.target.value, 10);
+                          if (!isNaN(val)) {
+                            updateConfigMutation.mutate({ savingsConfig: { gracePeriodDays: val } });
+                          }
+                        }}
+                      />
+                      <span className="text-sm font-bold text-fg/60">Days</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 bg-bg/50 rounded-xl border border-border">
+                    <div className="w-2/3">
+                      <div className="font-bold text-fg">Drop Threshold Limit</div>
+                      <div className="text-xs text-fg/60 mt-1">Days before departure where users below 80% funding are dropped from the package.</div>
+                    </div>
+                    <div className="w-1/3 flex items-center gap-2">
+                      <input 
+                        type="number"
+                        min="1"
+                        max="90"
+                        className="input py-1 text-sm text-right flex-1"
+                        defaultValue={Number(configData?.data?.savingsConfig?.dropThresholdDays ?? 30)}
+                        onBlur={(e) => {
+                          const val = parseInt(e.target.value, 10);
+                          if (!isNaN(val)) {
+                            updateConfigMutation.mutate({ savingsConfig: { dropThresholdDays: val } });
+                          }
+                        }}
+                      />
+                      <span className="text-sm font-bold text-fg/60">Days</span>
+                    </div>
                   </div>
                 </div>
               </div>

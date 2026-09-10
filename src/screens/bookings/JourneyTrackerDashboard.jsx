@@ -12,6 +12,7 @@ const JourneyTrackerDashboard = () => {
 
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   const [isFollowUpModalOpen, setIsFollowUpModalOpen] = useState(false);
+  const [isSurchargeModalOpen, setIsSurchargeModalOpen] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState(null);
 
   // Form states
@@ -21,6 +22,9 @@ const JourneyTrackerDashboard = () => {
 
   const [followUpNotes, setFollowUpNotes] = useState('');
   const [nextFollowUpAt, setNextFollowUpAt] = useState('');
+
+  const [surchargeAmount, setSurchargeAmount] = useState('');
+  const [surchargeReason, setSurchargeReason] = useState('');
 
   const { data: bookings, isLoading } = useQuery({
     queryKey: ['admin-journey-tracker'],
@@ -64,6 +68,19 @@ const JourneyTrackerDashboard = () => {
     }
   });
 
+  const surchargeMutation = useMutation({
+    mutationFn: ({ id, data }) => api.post(`/admin/bookings/${id}/surcharge`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['admin-journey-tracker']);
+      toast.success('Surcharge applied successfully');
+      setIsSurchargeModalOpen(false);
+      resetForms();
+    },
+    onError: (err) => {
+      toast.error(err.response?.data?.message || 'Failed to apply surcharge');
+    }
+  });
+
   const resetForms = () => {
     setSelectedBooking(null);
     setUpdateStage('');
@@ -71,6 +88,8 @@ const JourneyTrackerDashboard = () => {
     setUpdateNotes('');
     setFollowUpNotes('');
     setNextFollowUpAt('');
+    setSurchargeAmount('');
+    setSurchargeReason('');
   };
 
   const getStageStyle = (stage) => {
@@ -224,6 +243,16 @@ const JourneyTrackerDashboard = () => {
                         >
                           <MessageSquare className="w-4 h-4" />
                         </button>
+                        <button 
+                          onClick={() => {
+                            setSelectedBooking(booking);
+                            setIsSurchargeModalOpen(true);
+                          }}
+                          className="p-2 text-orange-500 hover:bg-orange-500/10 rounded-lg transition-colors"
+                          title="Apply Surcharge"
+                        >
+                          <AlertTriangle className="w-4 h-4" />
+                        </button>
                         {booking.status === 'PENDING' && (
                           <button 
                             onClick={() => {
@@ -349,13 +378,64 @@ const JourneyTrackerDashboard = () => {
                 disabled={followUpMutation.isPending}
                 className="w-full py-2.5 bg-secondary text-primary font-bold rounded-xl flex items-center justify-center hover:opacity-90 transition-opacity"
               >
-                {followUpMutation.isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Save Follow-up'}
+                {followUpMutation.isLoading ? 'Saving...' : 'Save Follow-up'}
               </button>
             </div>
           </div>
         </div>
       )}
 
+      {/* Surcharge Modal */}
+      {isSurchargeModalOpen && selectedBooking && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-card w-full max-w-md rounded-2xl shadow-xl overflow-hidden">
+            <div className="p-6 border-b border-border flex justify-between items-center bg-orange-50/50">
+              <h3 className="font-bold text-lg text-orange-800">Apply Price Surcharge</h3>
+              <button onClick={() => setIsSurchargeModalOpen(false)} className="text-orange-800/40 hover:text-orange-800">✕</button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="bg-orange-100/50 p-3 rounded-lg text-sm text-orange-800 mb-4">
+                <strong>Warning:</strong> This will increase the total cost of booking #{selectedBooking.bookingRef} and send a notification to the user.
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-fg/70 mb-1">Surcharge Amount (₦)</label>
+                <input
+                  type="number"
+                  value={surchargeAmount}
+                  onChange={(e) => setSurchargeAmount(e.target.value)}
+                  placeholder="e.g. 50000"
+                  className="w-full px-4 py-2 bg-bg border border-border rounded-xl text-sm focus:border-orange-500 outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-fg/70 mb-1">Reason for Surcharge</label>
+                <textarea
+                  value={surchargeReason}
+                  onChange={(e) => setSurchargeReason(e.target.value)}
+                  placeholder="e.g. Operator increased flight prices due to FX"
+                  className="w-full px-4 py-2 bg-bg border border-border rounded-xl text-sm focus:border-orange-500 outline-none h-24 resize-none"
+                />
+              </div>
+              <button
+                onClick={() => {
+                  if (!surchargeAmount || !surchargeReason) {
+                    toast.error('Amount and reason are required');
+                    return;
+                  }
+                  surchargeMutation.mutate({ 
+                    id: selectedBooking.id, 
+                    data: { amount: Number(surchargeAmount), reason: surchargeReason } 
+                  });
+                }}
+                disabled={surchargeMutation.isLoading}
+                className="w-full py-3 bg-orange-600 hover:bg-orange-700 text-white font-medium rounded-xl transition-colors disabled:opacity-50"
+              >
+                {surchargeMutation.isLoading ? 'Applying...' : 'Apply Surcharge'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </DashboardLayout>
   );
 };

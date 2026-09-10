@@ -155,6 +155,7 @@ import VerificationDetail from '@/screens/verification/VerificationDetail';
 import CommissionManagement from '@/screens/commissions/CommissionManagement';
 import PromoManagement from '@/screens/promos/PromoManagement';
 import JourneyTrackerDashboard from '@/screens/bookings/JourneyTrackerDashboard';
+import SavingsTrackerDashboard from '@/screens/users/SavingsTrackerDashboard';
 import ArchivedBookings from '@/screens/bookings/ArchivedBookings';
 
 // import CustomerManagement from '@/screens/customers/CustomerManagement';
@@ -205,6 +206,7 @@ function App() {
               <Route path="/commissions" element={<CommissionManagement />} />
               <Route path="/promos" element={<PromoManagement />} />
               <Route path="/journey-tracker" element={<JourneyTrackerDashboard />} />
+              <Route path="/savings-tracker" element={<SavingsTrackerDashboard />} />
               <Route path="/archived-bookings" element={<ArchivedBookings />} />
               {/* Add more protected routes as needed */}
             </Route>
