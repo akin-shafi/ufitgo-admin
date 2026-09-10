@@ -10,7 +10,7 @@ const VerificationDashboard = () => {
 
     const { data, isLoading, } = useQuery({
         queryKey: ['kyc-verifications', statusFilter],
-        queryFn: () => api.get(`/kyc/admin/requests${statusFilter ? `?status=${statusFilter}` : ''}`).then(res => res.data)
+        queryFn: () => api.get(`/kyc/admin/upgrades${statusFilter ? `?status=${statusFilter}` : ''}`).then(res => res.data)
     });
 
     const requests = data?.data || [];
@@ -26,7 +26,7 @@ const VerificationDashboard = () => {
                     </div>
                     <div className="flex items-center space-x-3 overflow-x-auto pb-2 md:pb-0">
                         <div className="flex bg-bg p-1 rounded-xl border border-border whitespace-nowrap">
-                            {['', 'pending_review', 'approved', 'rejected'].map(s => (
+                            {['', 'PENDING', 'APPROVED', 'REJECTED'].map(s => (
                                 <button
                                     key={s}
                                     onClick={() => setStatusFilter(s)}
@@ -50,7 +50,7 @@ const VerificationDashboard = () => {
                             <thead>
                                 <tr className="border-b border-border bg-fg/5">
                                     <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-fg/60">User</th>
-                                    <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-fg/60">Submitted Identifiers</th>
+                                    <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-fg/60">Requested Upgrade</th>
                                     <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-fg/60">Status</th>
                                     <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-fg/60">Submission Date</th>
                                     <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-right text-fg/60">Action</th>
@@ -64,16 +64,9 @@ const VerificationDashboard = () => {
                                             <div className="text-xs text-fg/40">{req.user?.email}</div>
                                         </td>
                                         <td className="px-6 py-4 space-y-1">
-                                            {req.bvn && (
-                                                <div className="text-xs font-mono bg-accent/5 px-2 py-0.5 rounded border border-accent/10 w-fit">
-                                                    <span className="font-bold text-accent">BVN:</span> {req.bvn}
-                                                </div>
-                                            )}
-                                            {req.nin && (
-                                                <div className="text-xs font-mono bg-primary/5 px-2 py-0.5 rounded border border-primary/10 w-fit">
-                                                    <span className="font-bold text-primary">NIN:</span> {req.nin}
-                                                </div>
-                                            )}
+                                            <div className="text-xs font-mono bg-accent/5 px-2 py-0.5 rounded border border-accent/10 w-fit">
+                                                Tier {req.currentTier || 1} &rarr; <span className="font-bold text-accent">Tier {req.requestedTier}</span>
+                                            </div>
                                         </td>
                                         <td className="px-6 py-4">
                                             <StatusBadge status={req.status} />
@@ -100,11 +93,11 @@ const VerificationDashboard = () => {
 
 const StatusBadge = ({ status }) => {
     switch (status) {
-        case 'pending_review':
+        case 'PENDING':
             return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-widest bg-amber-500/10 text-amber-500 border border-amber-500/20"><Clock className="w-3 h-3 mr-1" /> Pending</span>;
-        case 'approved':
+        case 'APPROVED':
             return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-widest bg-green-500/10 text-green-500 border border-green-500/20"><CheckCircle className="w-3 h-3 mr-1" /> Approved</span>;
-        case 'rejected':
+        case 'REJECTED':
             return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-widest bg-red-500/10 text-red-500 border border-red-500/20"><XCircle className="w-3 h-3 mr-1" /> Rejected</span>;
         default:
             return <span className="px-2 py-0.5 rounded bg-fg/10 text-xs font-bold capitalize">{status}</span>;

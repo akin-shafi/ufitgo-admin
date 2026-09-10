@@ -157,6 +157,8 @@ import PromoManagement from '@/screens/promos/PromoManagement';
 import JourneyTrackerDashboard from '@/screens/bookings/JourneyTrackerDashboard';
 import SavingsTrackerDashboard from '@/screens/users/SavingsTrackerDashboard';
 import ArchivedBookings from '@/screens/bookings/ArchivedBookings';
+import OperationsGuide from '@/screens/guide/OperationsGuide';
+import TechArchitectureScreen from '@/screens/guide/TechArchitectureScreen';
 
 // import CustomerManagement from '@/screens/customers/CustomerManagement';
 // import CustomerDetail from '@/screens/customers/CustomerDetail';
@@ -208,6 +210,8 @@ function App() {
               <Route path="/journey-tracker" element={<JourneyTrackerDashboard />} />
               <Route path="/savings-tracker" element={<SavingsTrackerDashboard />} />
               <Route path="/archived-bookings" element={<ArchivedBookings />} />
+              <Route path="/operations-guide" element={<OperationsGuide />} />
+              <Route path="/tech-architecture" element={<TechArchitectureScreen />} />
               {/* Add more protected routes as needed */}
             </Route>
           </Routes>

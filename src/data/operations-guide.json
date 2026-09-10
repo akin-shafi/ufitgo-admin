@@ -1,0 +1,139 @@
+{
+  "categories": [
+    {
+      "id": "savings",
+      "title": "Target Savings & Auto-Debit Management",
+      "icon": "PiggyBank",
+      "topics": [
+        {
+          "title": "How to Debug Auto-Debit Failures",
+          "content": "Auto-debits run on ECS via the `payment-service` worker (triggered by EventBridge). The user API only handles the state and reminders.",
+          "resolution": "Action: If an expected auto-debit didn't occur, check the `payment-service` logs and the EventBridge execution history first, before assuming the user API failed."
+        },
+        {
+          "title": "Handling Grace Periods & Missed Payments",
+          "content": "Missed debits trigger a grace period. The user API increments `missedPaymentsCount` and may recalculate monthly targets based on the goal timeline.",
+          "resolution": "Action: Before manually overriding a missed payment, inspect the goal's `nextDueDate`, `missedPaymentsCount`, and verify if `autoDebitEnabled` is true."
+        },
+        {
+          "title": "Managing the Drop Protocol",
+          "content": "When a user falls critically behind on funding, the Drop Protocol detaches their savings goal from the travel package and marks it DROPPED, preserving their saved funds.",
+          "resolution": "Action: If a user was dropped unexpectedly, review their funding percentage and `missedPaymentsCount`. Do not re-link them to a package without resolving the underlying payment failure."
+        },
+        {
+          "title": "Differentiating Reminders vs. Debits",
+          "content": "Reminders are notifications triggered via a system task; debits are actual payment attempts. A successful reminder does not mean a debit succeeded.",
+          "resolution": "Action: When handling a complaint, investigate the reminder logs and the payment gateway logs as two completely separate workflows."
+        },
+        {
+          "title": "Reconciling Manual Payment Drift",
+          "content": "Sometimes a gateway succeeds but the webhook fails, leaving the UfitGo ledger un-updated.",
+          "resolution": "Action: Always verify the transaction status on the payment gateway dashboard first. Only apply manual credits after confirming the gateway reference and ensuring no duplicate webhooks are pending."
+        }
+      ]
+    },
+    {
+      "id": "journey",
+      "title": "Journey Tracker & Booking Operations",
+      "icon": "Map",
+      "topics": [
+        {
+          "title": "Monitoring Booking Progression",
+          "content": "The Journey Tracker is your dashboard for tracking concierge bottlenecks and documentation readiness. It is NOT the source of truth for payments.",
+          "resolution": "Action: Use the Tracker to push bookings forward, but escalate payment discrepancies to the finance team instead of forcing status changes in the UI."
+        },
+        {
+          "title": "Advancing Journey Stages",
+          "content": "Bookings move from checkout -> concierge -> verification -> payment -> fulfilment. Admins should only intervene for exception handling.",
+          "resolution": "Action: If a booking is stuck, inspect its uploaded documents and operator action history before manually advancing the stage."
+        },
+        {
+          "title": "How to Apply Surcharges",
+          "content": "Surcharges (for FX changes or operator fees) directly affect the user's financial balance.",
+          "resolution": "Action: Only apply a surcharge after validating the commercial reason. Confirm that the user received the surcharge notification and their booking amount was updated."
+        },
+        {
+          "title": "Handling Operator Package Disruption",
+          "content": "If an operator cancels a package, affected users must be migrated without losing their savings progress.",
+          "resolution": "Action: Coordinate migrations with the finance and operator teams. Do not simply change the `linkedPackageId`—you must also reconcile the booking and payment state."
+        }
+      ]
+    },
+    {
+      "id": "kyc",
+      "title": "KYC Verification & Tier Limits",
+      "icon": "ShieldCheck",
+      "topics": [
+        {
+          "title": "Navigating the Hybrid KYC Model",
+          "content": "UfitGo uses both legacy KYC fields on the user model and newer KYC profile records. Both affect tier enforcement.",
+          "resolution": "Action: When investigating a KYC block, check both the legacy KYC status and the new KYC profile table to ensure they align."
+        },
+        {
+          "title": "Monitoring Tier Limits",
+          "content": "A daily job monitors user balances. If a user approaches 80% of their KYC tier limit, they are flagged for an upgrade.",
+          "resolution": "Action: If a user complains about limit restrictions, review their current wallet balance against their active tier before approving any large manual withdrawals."
+        },
+        {
+          "title": "Performing Manual KYC Reviews",
+          "content": "Manual intervention is needed when automated provider checks (e.g., SmileID) fail due to blurry photos or data mismatches.",
+          "resolution": "Action: Rely on the uploaded user evidence in the Admin Dashboard. If the UI routing seems broken, check the raw verification records directly in the database."
+        },
+        {
+          "title": "Triggering Tier 3 (Address Verification)",
+          "content": "Tier 3 is requested progressively—only when user balances demand it, or for massive goals like Hajj packages.",
+          "resolution": "Action: Do not force all new users through Tier 3 verification. Allow the progressive triggers to handle the escalation automatically."
+        }
+      ]
+    },
+    {
+      "id": "finance",
+      "title": "Finance, Escrow, Payments & PTA",
+      "icon": "Banknote",
+      "topics": [
+        {
+          "title": "Operating the Escrow System",
+          "content": "Escrow releases funds to operators in tranches based on milestones. Visibility into Escrow is controlled by feature flags.",
+          "resolution": "Action: If you cannot see the Escrow dashboard, ask an engineer to verify your account's feature flag state before assuming the system is down."
+        },
+        {
+          "title": "Checking Payment Service Health",
+          "content": "The payment service is strictly versioned under `/api/v1`.",
+          "resolution": "Action: Use `/api/v1/health` to check if the payment service is online. Do not use legacy `/api/payments` paths."
+        },
+        {
+          "title": "Processing Refunds & Penalties",
+          "content": "Breaking a savings goal incurs penalties. Refunds must preserve ledger integrity and auditability.",
+          "resolution": "Action: Before confirming a refund, review the active penalty rules and ensure no pending gateway transactions are in flight."
+        },
+        {
+          "title": "Troubleshooting PTA Batch Failures",
+          "content": "PTA (Personal Travel Allowance) requests are processed in batches. Failures can occur at the banking layer or internally.",
+          "resolution": "Action: When a batch fails, isolate the issue: check if the approval failed, the export failed, or the bank submission failed before retrying the batch."
+        }
+      ]
+    },
+    {
+      "id": "platform",
+      "title": "Platform Routing, Scheduler & Incident Triage",
+      "icon": "Server",
+      "topics": [
+        {
+          "title": "Verifying Public Routes",
+          "content": "Different services handle different API paths on `api.ufitgo.ng` (e.g., `/api/health` vs `/api/v1/*`).",
+          "resolution": "Action: During an incident, verify the exact URL the frontend is calling. Many \"outages\" are actually just clients calling deprecated route paths."
+        },
+        {
+          "title": "Triaging Scheduler Incidents",
+          "content": "Cron jobs are split between ECS EventBridge workers and PostgreSQL-locked in-app tasks.",
+          "resolution": "Action: For missed tasks, investigate EventBridge for worker jobs, and check the lock tables/logs for in-app jobs. Do not treat all crons the same."
+        },
+        {
+          "title": "Handling Admin UI Route Drift",
+          "content": "Admin dashboard links occasionally fall out of sync with backend routes during major refactors.",
+          "resolution": "Action: If a dashboard button 404s, verify if the backend feature was moved behind a feature flag or renamed before escalating a P1 incident."
+        }
+      ]
+    }
+  ]
+}

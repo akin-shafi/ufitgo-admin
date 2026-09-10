@@ -13,11 +13,11 @@ const VerificationDetail = () => {
     const [showRejectModal, setShowRejectModal] = useState(false);
     const { data, isLoading } = useQuery({
         queryKey: ['kyc-verification', id],
-        queryFn: () => api.get(`/kyc/admin/requests/${id}`).then(res => res.data)
+        queryFn: () => api.get(`/kyc/admin/upgrades/${id}`).then(res => res.data)
     });
 
     const approveMutation = useMutation({
-        mutationFn: () => api.post(`/kyc/admin/approve/${id}`, { adminId: 'ADMIN_USER' }),
+        mutationFn: () => api.post(`/kyc/admin/upgrades/${id}/approve`, { adminId: 'ADMIN_USER' }),
         onSuccess: () => {
             queryClient.invalidateQueries(['kyc-verifications']);
             queryClient.invalidateQueries(['kyc-verification', id]);
@@ -26,7 +26,7 @@ const VerificationDetail = () => {
     });
 
     const rejectMutation = useMutation({
-        mutationFn: (reason) => api.post(`/kyc/admin/reject/${id}`, { adminId: 'ADMIN_USER', reason }),
+        mutationFn: (reason) => api.post(`/kyc/admin/upgrades/${id}/reject`, { adminId: 'ADMIN_USER', reason }),
         onSuccess: () => {
             queryClient.invalidateQueries(['kyc-verifications']);
             queryClient.invalidateQueries(['kyc-verification', id]);
@@ -87,24 +87,33 @@ const VerificationDetail = () => {
                         </div>
                     </div>
 
-                    {/* Identifiers Card */}
+                    {/* Documents Card */}
                     <div className="card bg-primary/[0.02] border-dashed border-2 border-primary/20">
                         <h3 className="font-bold text-xs uppercase tracking-[0.2em] text-fg/40 mb-8 flex items-center">
-                            <CreditCard className="w-5 h-5 mr-3 text-primary" /> Identity Records For Validation
+                            <CreditCard className="w-5 h-5 mr-3 text-primary" /> Identity Records For Validation (Tier {request.requestedTier})
                         </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="bg-card p-6 rounded-2xl border border-border flex flex-col items-center justify-center text-center shadow-sm">
-                                <p className="text-[10px] font-bold text-fg/40 uppercase tracking-[0.1em] mb-2">Bank Verification Number (BVN)</p>
-                                <p className="text-2xl font-mono font-bold tracking-[0.25em] text-accent">{request.bvn || 'NOT PROVIDED'}</p>
-                            </div>
-                            <div className="bg-card p-6 rounded-2xl border border-border flex flex-col items-center justify-center text-center shadow-sm">
-                                <p className="text-[10px] font-bold text-fg/40 uppercase tracking-[0.1em] mb-2">National Identity Number (NIN)</p>
-                                <p className="text-2xl font-mono font-bold tracking-[0.25em] text-primary">{request.nin || 'NOT PROVIDED'}</p>
-                            </div>
+                        <div className="grid grid-cols-1 gap-6">
+                            {request.requestedTier === 2 && request.submittedDocuments?.livenessImageUrl && (
+                                <div className="bg-card p-6 rounded-2xl border border-border flex flex-col items-center justify-center text-center shadow-sm">
+                                    <p className="text-[10px] font-bold text-fg/40 uppercase tracking-[0.1em] mb-4">Liveness Selfie</p>
+                                    <img src={request.submittedDocuments.livenessImageUrl} alt="Liveness Selfie" className="max-w-full h-auto max-h-64 rounded-xl shadow-md border border-border" />
+                                </div>
+                            )}
+                            {request.requestedTier === 3 && request.submittedDocuments?.utilityBillUrl && (
+                                <div className="bg-card p-6 rounded-2xl border border-border flex flex-col items-center justify-center text-center shadow-sm">
+                                    <p className="text-[10px] font-bold text-fg/40 uppercase tracking-[0.1em] mb-4">Utility Bill</p>
+                                    <img src={request.submittedDocuments.utilityBillUrl} alt="Utility Bill" className="max-w-full h-auto max-h-64 rounded-xl shadow-md border border-border" />
+                                </div>
+                            )}
+                            {(!request.submittedDocuments || (!request.submittedDocuments.livenessImageUrl && !request.submittedDocuments.utilityBillUrl)) && (
+                                <div className="py-8 text-center text-fg/40 font-medium italic">
+                                    No documents attached to this upgrade request.
+                                </div>
+                            )}
                         </div>
                     </div>
 
-                    {request.status === 'rejected' && request.rejectionReason && (
+                    {request.status === 'REJECTED' && request.rejectionReason && (
                         <div className="card bg-red-500/5 border-red-500/20">
                             <h3 className="text-red-500 font-bold mb-3 flex items-center text-sm tracking-tight"><AlertCircle className="w-4 h-4 mr-2" /> Official Rejection Reason</h3>
                             <p className="text-sm text-red-500/80 leading-relaxed font-medium">{request.rejectionReason}</p>
@@ -117,7 +126,7 @@ const VerificationDetail = () => {
                     <div className="card sticky top-24 border-primary/30">
                         <h3 className="font-bold mb-6 text-sm uppercase tracking-widest text-fg/50">Admin Action Center</h3>
 
-                        {request.status === 'pending_review' ? (
+                        {request.status === 'PENDING' ? (
                             <div className="space-y-4">
                                 <div className="p-4 bg-amber-500/5 rounded-xl border border-amber-500/20 mb-6 flex space-x-3">
                                     <AlertCircle className="w-5 h-5 text-amber-500 flex-shrink-0" />
@@ -143,7 +152,7 @@ const VerificationDetail = () => {
                         ) : (
                             <div className="text-center py-8">
                                 <div className="flex justify-center mb-6">
-                                    {request.status === 'approved' ? (
+                                    {request.status === 'APPROVED' ? (
                                         <div className="w-20 h-20 rounded-full bg-green-500/10 flex items-center justify-center border-4 border-green-500/30">
                                             <CheckCircle className="w-10 h-10 text-green-500" />
                                         </div>
@@ -156,7 +165,9 @@ const VerificationDetail = () => {
                                 <p className="font-ex-bold capitalize text-xl text-fg mb-2">Request {request.status}</p>
                                 <div className="space-y-1">
                                     <p className="text-xs text-fg/40 font-bold uppercase tracking-tighter">Processed by SYSTEM_ADMIN</p>
-                                    <p className="text-[10px] text-fg/30 uppercase font-black tracking-widest">{new Date(request.verifiedAt).toLocaleDateString()} @ {new Date(request.verifiedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                                    {(request.approvedAt || request.rejectedAt) && (
+                                        <p className="text-[10px] text-fg/30 uppercase font-black tracking-widest">{new Date(request.approvedAt || request.rejectedAt).toLocaleDateString()} @ {new Date(request.approvedAt || request.rejectedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                                    )}
                                 </div>
                             </div>
                         )}

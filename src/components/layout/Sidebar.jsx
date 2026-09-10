@@ -23,7 +23,9 @@ import {
   Package,
   Mail,
   X, // <--- Added here
-  PiggyBank
+  PiggyBank,
+  BookOpen,
+  Code
 } from 'lucide-react';
 
 import { useAuth } from '@/context/AuthContext';
@@ -56,6 +58,8 @@ const navigation = [
     name: 'Operations',
     icon: Activity,
     children: [
+      { name: 'Operations Guide', href: '/operations-guide', icon: BookOpen },
+      { name: 'Tech Architecture', href: '/tech-architecture', icon: Code },
       { name: 'Service Packages', href: '/packages', icon: Package },
       { name: 'Journey Tracker', href: '/journey-tracker', icon: Map },
       { name: 'Savings Tracker', href: '/savings-tracker', icon: PiggyBank },

@@ -1,0 +1,144 @@
+{
+  "categories": [
+    {
+      "id": "stack",
+      "title": "Core Technology Stack",
+      "icon": "Layers",
+      "topics": [
+        {
+          "title": "Developing Frontend Applications",
+          "content": "UfitGo consists of three main frontends: a React Native Expo mobile app, a Next.js user website, and a Vite-powered React admin console. These clients share business concepts but evolve independently.",
+          "resolution": "Action: When building a new user-facing flow, always check if the concept needs to be implemented across mobile, web, and admin. Do not assume one frontend is the only source of truth."
+        },
+        {
+          "title": "Building in the Primary Backends",
+          "content": "Our main transactional APIs are modular NestJS services written in TypeScript. The user API handles wallet, savings, and KYC. Separate NestJS services run the admin and operator experiences.",
+          "resolution": "Action: Place new business logic inside the service that actually owns the domain boundary. Do not duplicate domain logic across the admin, operator, or API gateway layers."
+        },
+        {
+          "title": "Integrating with Go Services",
+          "content": "The `payment-service` and `notification-service` are written in Go. `payment-service` manages gateway debits and background worker modes. `notification-service` handles all outbound emails and messages.",
+          "resolution": "Action: If your new feature requires payment execution or sending emails/SMS, integrate with these existing Go services via API calls instead of building that workload directly into the NestJS user API."
+        },
+        {
+          "title": "Managing the Persistence Layer",
+          "content": "PostgreSQL is our system of record (users, savings, wallet balances). TypeORM is the standard data access layer in NestJS. Redis is used for caching and shared state.",
+          "resolution": "Action: Always implement schema changes using explicit TypeORM entities and migration scripts. Use DTO validation for all inputs. Avoid storing ad-hoc JSON blobs."
+        }
+      ]
+    },
+    {
+      "id": "integrations",
+      "title": "Third-Party Integrations",
+      "icon": "Plug",
+      "topics": [
+        {
+          "title": "Working with Banking-as-a-Service",
+          "content": "We provision virtual accounts via BaaS integrations (e.g. Wema/FCMB). The `baas_accounts` table links provider-specific accounts to our users, allowing deposits to be matched to wallets and constrained by KYC limits.",
+          "resolution": "Action: If you need to swap or add a BaaS provider, implement it behind the existing internal abstraction. This ensures wallet funding and compliance checks remain untouched."
+        },
+        {
+          "title": "Handling KYC Providers",
+          "content": "Identity verification (BVN, NIN, liveness) is handled dynamically by our KYC subsystem. We are currently in a hybrid state where legacy user KYC fields coexist with the newer profile models.",
+          "resolution": "Action: When updating KYC flows, ensure you update both the legacy KYC records and the new KYC profile models until the migration is officially completed."
+        },
+        {
+          "title": "Configuring Payment Gateways & Webhooks",
+          "content": "External gateways (Paystack, Monnify) handle card funding and debits. Webhooks are critical for finalizing wallet/savings states after a gateway event.",
+          "resolution": "Action: Always ensure gateway webhooks are signature-validated and idempotent. If you alter payment success logic, test both the direct API return path and the asynchronous webhook path."
+        },
+        {
+          "title": "Triggering Notifications",
+          "content": "The user API dictates *when* a notification should fire, but the Go `notification-service` handles the actual template delivery.",
+          "resolution": "Action: To debug missing emails, first check the user API logs to see if the trigger fired. If it did, check the `notification-service` logs for delivery failures."
+        }
+      ]
+    },
+    {
+      "id": "cron",
+      "title": "Background Jobs & Scheduled Work",
+      "icon": "Clock",
+      "topics": [
+        {
+          "title": "Managing the Auto-Debit Worker",
+          "content": "Recurring auto-debits run via the `payment-service` Docker image in a dedicated worker mode (set via `APP_MODE`), triggered by EventBridge.",
+          "resolution": "Action: Do not add scheduled financial tasks to the NestJS API. Any critical scheduled financial work must run as an explicit worker task."
+        },
+        {
+          "title": "Creating Safe In-App Cron Jobs",
+          "content": "Jobs like KYC monitoring and savings auditing run inside the user API. Because the API scales horizontally, these jobs use PostgreSQL advisory locks (via `CronLockService`) to prevent duplicate executions.",
+          "resolution": "Action: If you add a new cron job to the user API, you MUST wrap it in a distributed lock before executing its logic, or it will run multiple times in production."
+        },
+        {
+          "title": "Triggering Savings Reminders",
+          "content": "Savings reminders are triggered by an external scheduler calling a protected endpoint in the user API, guarded by `x-system-key`.",
+          "resolution": "Action: To manually test or wire up new schedulers for reminders, call this protected system task endpoint rather than bypassing the API boundary."
+        },
+        {
+          "title": "Monitoring Job Observability",
+          "content": "All background jobs must emit structured logs including duration and processed record counts to help operators detect silent failures.",
+          "resolution": "Action: Before deploying a new scheduled job, ensure it logs its execution time and the number of items it processed. A job is not production-ready without these metrics."
+        }
+      ]
+    },
+    {
+      "id": "patterns",
+      "title": "Architectural Patterns",
+      "icon": "Code",
+      "topics": [
+        {
+          "title": "Enforcing Modular Domain Ownership",
+          "content": "Our codebase uses strict domain boundaries (Wallet, Savings, KYC, Notifications). Each module owns its own controllers and persistence logic.",
+          "resolution": "Action: Fix bugs and add business rules in the service/module that actually owns the data. Do not patch logic in gateways or downstream consumers."
+        },
+        {
+          "title": "Using Environment-Driven Modes",
+          "content": "We use runtime flags (like `APP_MODE` in `payment-service`) to switch behaviors between HTTP API and background worker within the same codebase.",
+          "resolution": "Action: Only use explicit environment-driven modes if both modes share the same code ownership. Otherwise, split them into cleanly separated codebases."
+        },
+        {
+          "title": "Defining Internal API Contracts",
+          "content": "Services communicate via internal HTTP APIs protected by shared secrets (e.g., `x-internal-api-key`).",
+          "resolution": "Action: When Service A needs data from Service B, create a protected endpoint in Service B. NEVER connect Service A directly to Service B's database."
+        },
+        {
+          "title": "Implementing Progressive Compliance",
+          "content": "We use Progressive KYC: users start with minimal friction (Tier 1) and are prompted for deeper compliance (Tier 2/3) only when their balance or risk profile grows.",
+          "resolution": "Action: When building new high-risk financial features, tie them into the progressive KYC state rather than building standalone compliance checks."
+        }
+      ]
+    },
+    {
+      "id": "infra",
+      "title": "Infrastructure, Routing & Operations",
+      "icon": "Server",
+      "topics": [
+        {
+          "title": "Routing via Application Load Balancer (ALB)",
+          "content": "Traffic to `api.ufitgo.ng` hits an AWS ALB, which routes requests to backend services based on path rules. The ALB path map is the single source of truth.",
+          "resolution": "Action: If an endpoint returns 503, do not assume the app is down. First check the ALB listener rules and target-group health in AWS."
+        },
+        {
+          "title": "Understanding Public Route Families",
+          "content": "Public API routing is strictly defined: `/api/health` for User API, `/api/v1/*` for Payment Service, etc.",
+          "resolution": "Action: When debugging frontend connection issues, verify the exact route being called matches our ALB rules. A healthy service behind a misconfigured route appears as an outage."
+        },
+        {
+          "title": "Deploying ECS Express Services",
+          "content": "Core APIs are deployed as independent ECS Express services with individual task definitions and health checks.",
+          "resolution": "Action: Treat the ECS service health, the Target Group health, and the ALB routing rules as three separate points of failure during production debugging."
+        },
+        {
+          "title": "Managing Secrets and Configuration",
+          "content": "We use AWS SSM Parameter Store and Secrets Manager for sensitive config. Local `.env` files are for development only.",
+          "resolution": "Action: When investigating production behavior, never rely on your local `.env`. Verify the actual runtime config injected into the ECS task."
+        },
+        {
+          "title": "Creating Operational Runbooks",
+          "content": "Background jobs and new infrastructure require explicit operational ownership, including CloudWatch alarms and runbooks.",
+          "resolution": "Action: When shipping a new scheduler or worker, you must include setup scripts, CloudWatch alarm definitions, and rollback instructions in the PR."
+        }
+      ]
+    }
+  ]
+}
