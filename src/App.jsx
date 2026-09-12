@@ -137,8 +137,6 @@ const StatCard = ({ title, value, change, icon }) => (
 );
 
 // Lazy load actual screens or implement them below
-import GlobalPTARequests from '@/screens/pta/GlobalPTARequests';
-import BulkBatchManagement from '@/screens/pta/BulkBatchManagement';
 import ExtensionsLibrary from '@/screens/extensions/ExtensionsLibrary';
 import UserManagement from '@/screens/users/UserManagement';
 import OperatorManagement from '@/screens/operators/OperatorManagement';
@@ -148,7 +146,6 @@ import SettingsScreen from '@/screens/settings/SettingsScreen';
 import PaymentPlatformScreen from '@/screens/payments/PaymentPlatformScreen';
 import BroadcastMessenger from '@/screens/notifications/BroadcastMessenger';
 import TemplateManager from '@/screens/templates/TemplateManager';
-import BankerPTADashboard from '@/screens/pta/BankerPTADashboard';
 import ComplianceEscrowDashboard from '@/screens/ComplianceEscrowDashboard';
 import VerificationDashboard from '@/screens/verification/VerificationDashboard';
 import VerificationDetail from '@/screens/verification/VerificationDetail';
@@ -159,6 +156,8 @@ import SavingsTrackerDashboard from '@/screens/users/SavingsTrackerDashboard';
 import ArchivedBookings from '@/screens/bookings/ArchivedBookings';
 import OperationsGuide from '@/screens/guide/OperationsGuide';
 import TechArchitectureScreen from '@/screens/guide/TechArchitectureScreen';
+import SavingsArchitectureScreen from '@/screens/guide/SavingsArchitectureScreen';
+import TravelFxArchitectureScreen from '@/screens/guide/TravelFxArchitectureScreen';
 
 // import CustomerManagement from '@/screens/customers/CustomerManagement';
 // import CustomerDetail from '@/screens/customers/CustomerDetail';
@@ -186,8 +185,6 @@ function App() {
             <Route path="/login" element={<LoginScreen />} />
             <Route element={<ProtectedRoute />}>
               <Route path="/" element={<Dashboard />} />
-              <Route path="/pta-requests" element={<GlobalPTARequests />} />
-              <Route path="/pta-batches" element={<BulkBatchManagement />} />
               <Route path="/extensions" element={<ExtensionsLibrary />} />
               <Route path="/users" element={<UserManagement />} />
               {/* <Route path="/customers" element={<CustomerManagement />} />
@@ -201,7 +198,6 @@ function App() {
               <Route path="/settings" element={<SettingsScreen />} />
               <Route path="/broadcast" element={<BroadcastMessenger />} />
               <Route path="/templates" element={<TemplateManager />} />
-              <Route path="/banker-pta" element={<BankerPTADashboard />} />
               <Route path="/compliance" element={<ComplianceEscrowDashboard />} />
               <Route path="/verifications" element={<VerificationDashboard />} />
               <Route path="/verifications/:id" element={<VerificationDetail />} />
@@ -212,6 +208,8 @@ function App() {
               <Route path="/archived-bookings" element={<ArchivedBookings />} />
               <Route path="/operations-guide" element={<OperationsGuide />} />
               <Route path="/tech-architecture" element={<TechArchitectureScreen />} />
+              <Route path="/savings-architecture" element={<SavingsArchitectureScreen />} />
+              <Route path="/travel-fx-architecture" element={<TravelFxArchitectureScreen />} />
               {/* Add more protected routes as needed */}
             </Route>
           </Routes>

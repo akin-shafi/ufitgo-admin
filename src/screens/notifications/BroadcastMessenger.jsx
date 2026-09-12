@@ -378,7 +378,7 @@ const BroadcastMessenger = () => {
                                         <input
                                             type="text"
                                             name="actionUrl"
-                                            placeholder="e.g. https://ufitgo.com/wallet"
+                                            placeholder="e.g. https://ufitgo.ng/wallet"
                                             className="input w-full text-sm"
                                             value={formData.actionUrl}
                                             onChange={handleChange}

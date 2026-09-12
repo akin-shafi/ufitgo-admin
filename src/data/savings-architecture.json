@@ -1,0 +1,78 @@
+{
+  "title": "UfitGo Savings & Checkout Architecture: Operational Reference",
+  "description": "This document outlines the agreed-upon business logic, user flows, and edge-case handling for the UfitGo Target Savings and Package Checkout system. It is formatted as a Q&A for easy reference by the Support and Operations teams.",
+  "categories": [
+    {
+      "id": "core-account",
+      "title": "1. Core Account & Savings Logic",
+      "icon": "PiggyBank",
+      "qas": [
+        {
+          "question": "Where is the user's money actually held when they save?",
+          "answer": "The money resides in a real Tier-1 bank account created for the user via our Banking-as-a-Service (BaaS) provider. We do not use a generic internal \"UfitGo Wallet\" for active savings. From a UX perspective, this is officially referred to as the user's \"Savings Account\"."
+        },
+        {
+          "question": "Can a user start saving immediately, even for a massive goal like a ₦10M Hajj package?",
+          "answer": "Yes. The user can start saving immediately with zero upfront friction (using a Tier 1 account). However, the system intelligently flags high-value goals and will present a \"Future KYC Required\" warning, letting them know they will eventually need to upgrade their account to reach that large target."
+        },
+        {
+          "question": "How does the system remind users to save?",
+          "answer": "**Auto-Debit (Card):** Deductions happen automatically in the background. The app displays an \"Auto-Debit Active\" badge.\n\n**Manual (Bank Transfer):** The app schedules local push notifications based on the user's selected frequency (daily, weekly, etc.) to remind them to make their transfer."
+        }
+      ]
+    },
+    {
+      "id": "breaking-completing",
+      "title": "2. Breaking vs. Completing a Goal",
+      "icon": "Target",
+      "qas": [
+        {
+          "question": "What happens if a user decides to \"Break\" their savings goal before reaching the target or maturity date?",
+          "answer": "- The user must have a verified external bank account on file.\n- The system deducts an administrative penalty fee (e.g., 0.9%).\n- The remaining funds are transferred directly out of the BaaS account to their verified external bank account.\n- The goal is marked as BROKEN."
+        },
+        {
+          "question": "What happens when a user successfully completes a savings goal? Do they just get the cash?",
+          "answer": "No. UfitGo is a purpose-driven app. When the target is reached, the money is not simply cashed out. Instead:\n\n1. The goal status changes to TARGET_REACHED.\n2. The app congratulates the user and shows them the original travel package they were saving for.\n3. The app prompts the user: \"Would you like us to verify if this package is still available?\"\n4. This initiates the Verification Buffer (see Checkout section below)."
+        }
+      ]
+    },
+    {
+      "id": "package-verification",
+      "title": "3. Package Verification & Price Changes",
+      "icon": "TrendingUp",
+      "qas": [
+        {
+          "question": "Travel prices fluctuate. What happens if the package price increases while the user is still saving?",
+          "answer": "The system handles this automatically:\n\n1. When an Admin updates the global price of a package, a background job runs.\n2. All users actively saving for that package receive a notification: \"The operator has updated the package price from ₦2.5M to ₦3M. Would you like us to adjust your savings target to match?\"\n3. If they click Yes, their target (and auto-debit) is updated.\n4. If they Ignore it, they continue saving toward the old ₦2.5M target."
+        },
+        {
+          "question": "What happens if a user ignored the price increase alert and hits their old target of ₦2.5M?",
+          "answer": "This is caught by the Verification Buffer:\n\n1. The user hits ₦2.5M and clicks \"Verify Package Availability\".\n2. Ops verifies the package and confirms it is available, but the price is now ₦3M.\n3. The user is notified: \"Good news, the package is available! However, the price is now ₦3M. To proceed, please top-up the remaining ₦500k into your Savings Account, or apply your ₦2.5M to alternative packages.\""
+        },
+        {
+          "question": "What if a user already locked in a booking by paying an initial deposit, and then the operator raises the price?",
+          "answer": "- If the operator's policy states that a deposit locks in the price, the user is unaffected.\n- If the operator passes the FX/cost increase to the user, the Admin will use a \"Price Adjustment\" tool to add a surcharge to the user's specific booking.\n- The user is notified that their outstanding balance has increased."
+        }
+      ]
+    },
+    {
+      "id": "checkout-payments",
+      "title": "4. Checkout & Payments",
+      "icon": "CreditCard",
+      "qas": [
+        {
+          "question": "Does UfitGo support \"Split Payments\" at checkout (e.g., paying partially from Savings and partially from a Card)?",
+          "answer": "No. True split payments create a massive reconciliation nightmare with PSP fees and operator payouts. Instead, we use a \"Top-Up Savings First\" logic."
+        },
+        {
+          "question": "How does the \"Top-Up First\" checkout logic work?",
+          "answer": "1. The user attempts to checkout a ₦3.5M package.\n2. They have ₦2.8M in their Savings Account.\n3. The system prompts: \"You are ₦700k short. Please top up your Savings Account to proceed.\"\n4. The user pays ₦700k via Card/Transfer into their Savings Account.\n5. With the balance now at ₦3.5M, they click \"Pay Now\", and the entire booking is executed as a single, unified transaction from the BaaS account."
+        },
+        {
+          "question": "Can a user book a package early if they don't have the full amount saved yet?",
+          "answer": "Yes! Because operators often accept installment payments. If a ₦3.5M package requires a ₦1M first installment, a user who has saved ₦1.2M can initiate the booking early. The system simply debits the ₦1M installment from their Savings Account and locks in the package, protecting them from future price hikes."
+        }
+      ]
+    }
+  ]
+}

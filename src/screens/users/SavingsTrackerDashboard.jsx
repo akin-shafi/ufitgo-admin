@@ -10,8 +10,8 @@ const SavingsTrackerDashboard = () => {
   const [riskFilter, setRiskFilter] = useState('ALL'); // 'ALL', 'AT_RISK', 'SAFE'
 
   const { data: goals, isLoading } = useQuery({
-    queryKey: ['admin-savings-tracker'],
-    queryFn: () => api.get('/wallet/internal/admin/savings-goals').then(res => res.data)
+    queryKey: ['savingsGoals'],
+    queryFn: () => api.get('/admin/wallet/savings-goals').then(res => res.data)
   });
 
   const filteredGoals = goals?.filter(g => {

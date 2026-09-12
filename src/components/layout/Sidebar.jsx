@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import api from '@/api/client';
+import { UfitGoBrandMark } from '@/components/common/UfitGoBrandMark';
 import {
   LayoutDashboard,
   Plane,
@@ -44,14 +45,11 @@ const navigation = [
     ]
   },
   {
-    name: 'Finance & PTA',
+    name: 'Finance & Operations',
     icon: Banknote,
     children: [
       { name: 'Payments', href: '/payments', icon: CreditCard },
       { name: 'Commissions', href: '/commissions', icon: Banknote },
-      { name: 'PTA Requests', href: '/pta-requests', icon: Plane },
-      { name: 'Bulk Batches', href: '/pta-batches', icon: Banknote },
-      { name: 'Banking Portal', href: '/banker-portal', icon: Landmark },
     ]
   },
   {
@@ -60,6 +58,8 @@ const navigation = [
     children: [
       { name: 'Operations Guide', href: '/operations-guide', icon: BookOpen },
       { name: 'Tech Architecture', href: '/tech-architecture', icon: Code },
+      { name: 'Savings & Checkout Arch', href: '/savings-architecture', icon: BookOpen },
+      { name: 'Travel FX Arch', href: '/travel-fx-architecture', icon: Globe },
       { name: 'Service Packages', href: '/packages', icon: Package },
       { name: 'Journey Tracker', href: '/journey-tracker', icon: Map },
       { name: 'Savings Tracker', href: '/savings-tracker', icon: PiggyBank },
@@ -183,9 +183,14 @@ export const Sidebar = ({ isOpen, setIsOpen }) => {
 
       <aside className={`fixed top-0 left-0 z-50 w-64 h-screen bg-secondary border-r border-white/5 transition-transform duration-300 flex flex-col ${isOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}>
         <div className="px-6 py-6 mb-2 flex justify-between items-center">
-          <div>
-            <h1 className="text-2xl font-bold text-primary">UfitGo Admin</h1>
-            <p className="text-xs text-white/50 mt-1">Platform Governance</p>
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <UfitGoBrandMark className="h-9 w-9" showDot={true} />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-primary">UfitGo</h1>
+              <p className="text-[10px] uppercase tracking-[0.18em] text-white/50 mt-0.5">Admin</p>
+            </div>
           </div>
           <button 
             className="lg:hidden p-2 text-white/70 hover:text-white"

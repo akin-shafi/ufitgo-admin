@@ -1,0 +1,36 @@
+{
+  "title": "Travel FX Finder: Operational Reference",
+  "description": "This document outlines the business logic and user flow for the Travel FX feature within the UfitGo mobile app. It is designed to clarify the scope of our FX services for Support and Operations.",
+  "categories": [
+    {
+      "id": "core-concept",
+      "title": "1. Core Concept & Business Model",
+      "icon": "Globe",
+      "qas": [
+        {
+          "question": "Does UfitGo process the FX transaction or hold funds in escrow?",
+          "answer": "No. We are not doing escrow. The Travel FX feature is strictly a **BDC Discovery** tool. UfitGo does not process foreign exchange transactions, act as a financial intermediary, or hold funds in escrow. Users deal directly with the licensed Bureau De Change operators."
+        },
+        {
+          "question": "What is the primary purpose of the Travel FX Finder?",
+          "answer": "It serves as an intelligent directory to help travelers easily discover CBN-licensed Bureau De Change operators. Users filter by their State or Airport proximity to find operators near their departure point."
+        }
+      ]
+    },
+    {
+      "id": "telemetry-tracking",
+      "title": "2. User Interactions & Telemetry",
+      "icon": "Activity",
+      "qas": [
+        {
+          "question": "How do users contact the BDCs?",
+          "answer": "Once users find a BDC on the platform, they can use the **'Click to Call'** feature (supporting both standard phone calls and WhatsApp) or click **'Get Directions'** which directly opens the BDC's location in Google Maps."
+        },
+        {
+          "question": "Do we track these interactions if the transaction happens off-platform?",
+          "answer": "Yes. While the financial transaction happens off-platform, the app records telemetry events whenever a user clicks 'Call' (`CLICK_CALL`) or 'Directions' (`CLICK_DIRECTIONS`). This analytics data allows us to track lead generation, measure operator engagement, and demonstrate value to the BDCs listed on our platform."
+        }
+      ]
+    }
+  ]
+}

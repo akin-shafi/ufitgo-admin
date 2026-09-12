@@ -10,7 +10,7 @@ const VerificationDashboard = () => {
 
     const { data, isLoading, } = useQuery({
         queryKey: ['kyc-verifications', statusFilter],
-        queryFn: () => api.get(`/kyc/admin/upgrades${statusFilter ? `?status=${statusFilter}` : ''}`).then(res => res.data)
+        queryFn: () => api.get(`/admin/kyc/upgrades${statusFilter ? `?status=${statusFilter}` : ''}`).then(res => res.data)
     });
 
     const requests = data?.data || [];

@@ -1,20 +1,21 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
+import { UfitGoBrandMark } from '@/components/common/UfitGoBrandMark';
 import { Lock, Mail, Loader2, AlertCircle, Plane, Landmark, ShieldCheck, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const slides = [
   {
     icon: <Plane className="w-12 h-12" />,
     title: 'Hajj & Umrah Travel Management',
-    description: 'Monitor PTA/BTA applications, operator compliance, and pilgrim travel readiness from one powerful dashboard.',
+    description: 'Monitor operator performance, compliance, and pilgrim journey readiness from one unified dashboard.',
     gradient: 'from-amber-500 via-yellow-500 to-orange-400',
     pattern: 'radial-gradient(circle at 20% 80%, rgba(255,255,255,0.08) 0%, transparent 50%)',
   },
   {
     icon: <Landmark className="w-12 h-12" />,
-    title: 'Banking Partner Portal',
-    description: 'Review, approve, and export travel allowance requests. Download CSV reports and individual application PDFs in seconds.',
+    title: 'Operations Overview',
+    description: 'Track platform activity, service health, and operational signals without the older banking-specific language.',
     gradient: 'from-emerald-500 via-teal-500 to-cyan-500',
     pattern: 'radial-gradient(circle at 80% 20%, rgba(255,255,255,0.08) 0%, transparent 50%)',
   },
@@ -87,8 +88,8 @@ const LoginScreen = () => {
 
         {/* Logo top-left */}
         <div className="absolute top-6 left-6 sm:top-8 sm:left-8 lg:top-10 lg:left-12 flex items-center space-x-3 z-10">
-          <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center text-white font-black text-lg">
-            U
+          <div className="relative rounded-xl bg-white/15 backdrop-blur-sm p-2 shadow-sm ring-1 ring-white/20">
+            <UfitGoBrandMark className="h-8 w-8" showDot={true} />
           </div>
           <span className="text-white/90 font-bold text-lg tracking-tight hidden sm:inline">UfitGo</span>
         </div>
@@ -155,14 +156,16 @@ const LoginScreen = () => {
           {/* Header */}
           <div className="mb-10">
             <div className="lg:hidden flex items-center space-x-2 mb-6">
-              <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center text-primary font-black text-sm">U</div>
+              <div className="relative">
+                <UfitGoBrandMark className="h-8 w-8" showDot={true} />
+              </div>
               <span className="font-bold text-fg/80 tracking-tight">UfitGo</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-black text-fg tracking-tight">
               Welcome back
             </h1>
             <p className="text-fg/50 mt-2 text-sm sm:text-base">
-              Sign in to access admin dashboard, banking portal, or operator tools.
+              Sign in to access the admin dashboard and operational tools.
             </p>
           </div>
 
@@ -252,7 +255,6 @@ const LoginScreen = () => {
             <div className="flex flex-wrap gap-2">
               {[
                 { label: 'Platform Admin', color: 'bg-primary/10 text-primary' },
-                { label: 'Banking Partner', color: 'bg-emerald-50 text-emerald-600' },
                 { label: 'Super Admin', color: 'bg-violet-50 text-violet-600' },
               ].map((role) => (
                 <span
@@ -267,7 +269,7 @@ const LoginScreen = () => {
 
           {/* Footer */}
           <p className="mt-8 text-xs text-fg/30 font-medium">
-            &copy; {new Date().getFullYear()} UfitGo — Platform Governance &amp; Banking Portal
+            &copy; {new Date().getFullYear()} UfitGo — Platform Governance
           </p>
         </div>
       </div>
