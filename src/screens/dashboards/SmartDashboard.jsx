@@ -4,6 +4,8 @@ import ExecutiveDashboard from './ExecutiveDashboard';
 import OperationsDashboard from './OperationsDashboard';
 import ComplianceDashboard from './ComplianceDashboard';
 import SupportDashboard from './SupportDashboard';
+import FinanceDashboard from './FinanceDashboard';
+import TechnicalMonitoringDashboard from './TechnicalMonitoringDashboard';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 
 const DefaultDashboard = ({ role }) => (
@@ -31,8 +33,9 @@ const SmartDashboard = () => {
     case 'COMPLIANCE':
       return <ComplianceDashboard />;
     case 'FINANCE':
-      // return <FinanceDashboard />;
-      return <DefaultDashboard role={user.role} />;
+      return <FinanceDashboard />;
+    case 'TECHNICAL':
+      return <TechnicalMonitoringDashboard />;
     case 'SUPPORT':
       return <SupportDashboard />;
       // return <DefaultDashboard role={user.role} />; 
