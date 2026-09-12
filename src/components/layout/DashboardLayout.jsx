@@ -1,11 +1,23 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Sidebar } from '@/components/layout/Sidebar';
-import { Bell, Search, User, Menu } from 'lucide-react';
+import { Bell, Search, User, Menu, Settings, LogOut } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 
 export const Header = ({ title, toggleSidebar }) => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
   
   return (
     <header className="h-16 flex items-center justify-between px-8 bg-card border-b border-border sticky top-0 z-30">
@@ -37,15 +49,43 @@ export const Header = ({ title, toggleSidebar }) => {
           
           <div className="h-8 w-px bg-border"></div>
           
-          <Link to="/settings" className="flex items-center space-x-2 p-1 pr-3 hover:bg-bg rounded-xl transition-colors">
-            <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center text-primary font-bold">
-              {user?.companyName?.charAt(0) || <User className="w-5 h-5" />}
-            </div>
-            <div className="text-left">
-              <div className="text-xs font-bold leading-none">{user?.companyName || 'Administrator'}</div>
-              <div className="text-[10px] text-fg/40 mt-1 uppercase font-bold tracking-tighter">Super Admin</div>
-            </div>
-          </Link>
+          <div className="relative" ref={dropdownRef}>
+            <button 
+              onClick={() => setDropdownOpen(!dropdownOpen)}
+              className="flex items-center space-x-2 p-1 pr-3 hover:bg-bg rounded-xl transition-colors focus:outline-none"
+            >
+              <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center text-primary font-bold">
+                {user?.companyName?.charAt(0) || <User className="w-5 h-5" />}
+              </div>
+              <div className="text-left">
+                <div className="text-xs font-bold leading-none">{user?.companyName || 'Administrator'}</div>
+                <div className="text-[10px] text-fg/40 mt-1 uppercase font-bold tracking-tighter">Super Admin</div>
+              </div>
+            </button>
+
+            {dropdownOpen && (
+              <div className="absolute right-0 mt-2 w-48 bg-card border border-border rounded-xl shadow-lg py-1 z-50 animate-in fade-in zoom-in duration-200">
+                <Link 
+                  to="/settings" 
+                  onClick={() => setDropdownOpen(false)}
+                  className="flex items-center px-4 py-2 text-sm hover:bg-bg transition-colors"
+                >
+                  <Settings className="w-4 h-4 mr-2" />
+                  Settings
+                </Link>
+                <button 
+                  onClick={() => {
+                    setDropdownOpen(false);
+                    logout();
+                  }}
+                  className="flex items-center w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-bg transition-colors"
+                >
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Logout
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </header>
