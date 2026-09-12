@@ -32,61 +32,102 @@ import {
 import { useAuth } from '@/context/AuthContext';
 import { isFeatureEnabled } from '@/config/featureFlags';
 
+const checkAccess = (userPermissions = [], requiredPermissions = []) => {
+  if (!requiredPermissions || requiredPermissions.length === 0) return true;
+  if (userPermissions.includes('*')) return true;
+  // User must have at least ONE of the required permissions to see the menu item
+  return requiredPermissions.some(p => userPermissions.includes(p));
+};
+
 const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
   {
-    name: 'Users & Partners',
-    icon: Users,
+    name: 'Analytics',
+    icon: Activity,
+    permissions: ['analytics.read'],
     children: [
-     
-      { name: 'Operators', href: '/operators', icon: Briefcase },
-      { name: 'Platform Admins', href: '/users', icon: ShieldCheck },
-      { name: 'KYC Verification', href: '/kyc-verifications', icon: CheckCircle },
-    ]
-  },
-  {
-    name: 'Finance & Operations',
-    icon: Banknote,
-    children: [
-      { name: 'Payments', href: '/payments', icon: CreditCard },
-      { name: 'Commissions', href: '/commissions', icon: Banknote },
+      { name: 'Revenue', href: '/analytics/revenue', icon: Banknote, permissions: ['analytics.read'] },
+      { name: 'Bookings', href: '/analytics/bookings', icon: Briefcase, permissions: ['analytics.read'] },
+      { name: 'Customers', href: '/analytics/customers', icon: Users, permissions: ['analytics.read'] },
+      { name: 'Operators', href: '/analytics/operators', icon: Briefcase, permissions: ['analytics.read'] },
     ]
   },
   {
     name: 'Operations',
-    icon: Activity,
+    icon: Briefcase,
+    permissions: ['users.manage', 'operators.manage', 'packages.manage', 'bookings.manage', 'journeys.manage'],
     children: [
-      { name: 'Operations Guide', href: '/operations-guide', icon: BookOpen },
-      { name: 'Tech Architecture', href: '/tech-architecture', icon: Code },
-      { name: 'Savings & Checkout Arch', href: '/savings-architecture', icon: BookOpen },
-      { name: 'Travel FX Arch', href: '/travel-fx-architecture', icon: Globe },
-      { name: 'Service Packages', href: '/packages', icon: Package },
-      { name: 'Journey Tracker', href: '/journey-tracker', icon: Map },
-      { name: 'Savings Tracker', href: '/savings-tracker', icon: PiggyBank },
-      { name: 'Archived Bookings', href: '/archived-bookings', icon: Map },
-      { name: 'Compliance & Escrow', href: '/compliance-escrow', icon: ShieldCheck, visible: isFeatureEnabled('ESCROW_DASHBOARD') },
+      { name: 'Users', href: '/customers', icon: Users, permissions: ['users.manage'] },
+      { name: 'Operators', href: '/operators', icon: Briefcase, permissions: ['operators.manage'] },
+      { name: 'Packages', href: '/packages', icon: Package, permissions: ['packages.manage'] },
+      { name: 'Journey Tracker', href: '/journey-tracker', icon: Map, permissions: ['journeys.manage'] },
+      { name: 'Savings Tracker', href: '/savings-tracker', icon: PiggyBank, permissions: ['journeys.manage'] },
+      { name: 'Archived Bookings', href: '/archived-bookings', icon: Map, permissions: ['bookings.manage'] },
+    ]
+  },
+  {
+    name: 'Finance',
+    icon: Banknote,
+    permissions: ['finance.summary.read', 'payments.read', 'settlements.manage', 'commissions.manage', 'reconciliation.manage'],
+    children: [
+      { name: 'Payments', href: '/payments', icon: CreditCard, permissions: ['payments.read'] },
+      { name: 'Commissions', href: '/commissions', icon: Landmark, permissions: ['commissions.manage'] },
+      { name: 'Settlements', href: '/settlements', icon: Banknote, permissions: ['settlements.manage'] },
+    ]
+  },
+  {
+    name: 'Compliance',
+    icon: ShieldCheck,
+    permissions: ['kyc.manage', 'kyb.manage', 'compliance.manage'],
+    children: [
+      { name: 'KYC Verifications', href: '/verifications', icon: CheckCircle, permissions: ['kyc.manage'] },
+      { name: 'Compliance Escrow', href: '/compliance', icon: ShieldCheck, permissions: ['compliance.manage'], visible: isFeatureEnabled('ESCROW_DASHBOARD') },
+    ]
+  },
+  {
+    name: 'Monitoring',
+    icon: Activity,
+    permissions: ['monitoring.read', 'infrastructure.read'],
+    children: [
+      { name: 'System Health', href: '/monitoring', icon: Activity, permissions: ['monitoring.read'] },
     ]
   },
   {
     name: 'Marketing & Tools',
     icon: Megaphone,
+    permissions: ['marketing.manage', 'extensions.manage'],
     children: [
-      { name: 'Promo Codes', href: '/promos', icon: Megaphone },
-      { name: 'Broadcast', href: '/broadcast', icon: Megaphone },
-      { name: 'Email Templates', href: '/templates', icon: Mail },
-      { name: 'Extensions', href: '/extensions', icon: Globe },
+      { name: 'Promo Codes', href: '/promos', icon: Megaphone, permissions: ['marketing.manage'] },
+      { name: 'Broadcast', href: '/broadcast', icon: Megaphone, permissions: ['marketing.manage'] },
+      { name: 'Email Templates', href: '/templates', icon: Mail, permissions: ['marketing.manage'] },
+      { name: 'Extensions', href: '/extensions', icon: Globe, permissions: ['extensions.manage'] },
     ]
   },
-  { name: 'Settings', href: '/settings', icon: Settings },
+  {
+    name: 'Administration',
+    icon: Settings,
+    permissions: ['settings.manage', 'audit.read'],
+    children: [
+      { name: 'Platform Admins', href: '/users', icon: ShieldCheck, permissions: ['settings.manage'] },
+      { name: 'Operations Guide', href: '/operations-guide', icon: BookOpen, permissions: ['settings.manage'] },
+      { name: 'Tech Architecture', href: '/tech-architecture', icon: Code, permissions: ['settings.manage'] },
+      { name: 'Settings', href: '/settings', icon: Settings, permissions: ['settings.manage'] },
+    ]
+  }
 ];
 
 const NavItem = ({ item }) => {
   const location = useLocation();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
+  
   const isChildActive = item.children ? item.children.some(child => location.pathname === child.href) : false;
   const [isOpen, setIsOpen] = useState(isChildActive);
 
   if (item.visible === false) return null;
+  
+  // Check if user has permission to see this main item
+  if (!checkAccess(user?.permissions, item.permissions)) return null;
 
   const handlePrefetch = (href) => {
     switch(href) {
@@ -106,11 +147,15 @@ const NavItem = ({ item }) => {
       case '/packages':
         queryClient.prefetchQuery({ queryKey: ['admin-packages', 1, '', 'active'], queryFn: () => api.get('/admin/operator-auth/packages', { params: { page: 1, limit: 10, search: '', status: 'active' } }).then(res => res.data) });
         break;
-     
     }
   };
 
   if (item.children) {
+    const visibleChildren = item.children.filter(child => 
+      child.visible !== false && checkAccess(user?.permissions, child.permissions)
+    );
+
+    if (visibleChildren.length === 0) return null;
 
     return (
       <div className="mb-1">
@@ -128,7 +173,7 @@ const NavItem = ({ item }) => {
         </button>
         {isOpen && (
           <div className="mt-1 ml-4 pl-4 border-l border-white/10 space-y-1">
-            {item.children.filter(child => child.visible !== false).map((child) => (
+            {visibleChildren.map((child) => (
               <NavLink
                 key={child.name}
                 to={child.href}
