@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-quer
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { AuthProvider } from '@/context/AuthContext';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
+import { SessionTimeoutManager } from '@/components/common/SessionTimeoutManager';
 import LoginScreen from '@/screens/auth/LoginScreen';
 import api from '@/api/client';
 import { Plane, Package, DollarSign, ShieldCheck, Loader2 } from 'lucide-react';
@@ -180,6 +181,7 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
+        <SessionTimeoutManager />
         <BrowserRouter>
           <Routes>
             <Route path="/login" element={<LoginScreen />} />
