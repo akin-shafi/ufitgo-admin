@@ -6,7 +6,7 @@ import api from '@/api/client';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import {
   ArrowLeft, Loader2, Mail, Phone, User, Building, Package, ExternalLink,
-  ShieldCheck, ShieldAlert, CheckCircle, Plus, ChevronDown, Calendar
+  ShieldCheck, ShieldAlert, CheckCircle, Plus, ChevronDown, Calendar, Info
 } from 'lucide-react';
 
 // ─── Status Config ─────────────────────────────────────────────
@@ -32,6 +32,7 @@ const OperatorDetail = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('packages');
   const [showActions, setShowActions] = useState(false);
+  const [confirmKycStatus, setConfirmKycStatus] = useState(null);
   const queryClient = useQueryClient();
 
   const { data: operator, isLoading } = useQuery({
@@ -64,9 +65,11 @@ const OperatorDetail = () => {
     onSuccess: (_, status) => {
       queryClient.invalidateQueries(['operatorDossier', id]);
       toast.success(`Operator successfully ${status}`);
+      setConfirmKycStatus(null);
     },
     onError: (error) => {
       toast.error('Failed to update verification status: ' + (error.response?.data?.message || error.message));
+      setConfirmKycStatus(null);
     }
   });
 
@@ -333,6 +336,23 @@ const OperatorDetail = () => {
                   { label: 'Partner Type', value: <span className="uppercase">{operator.partnerType}</span> },
                   { label: 'Email', value: operator.email },
                   { label: 'Phone', value: operator.phone || '—' },
+                  ...(operator.partnerType === 'tour-operator' ? [
+                    { label: 'NAHCON License', value: operator.nahconId || '—' },
+                    { label: 'Capacity', value: operator.capacity || '—' },
+                  ] : []),
+                  ...(operator.partnerType === 'transport' ? [
+                    { label: 'Transport Reg', value: operator.transportReg || '—' },
+                    { label: 'Fleet Size', value: operator.fleetSize || '—' },
+                  ] : []),
+                  ...(operator.partnerType === 'sim-seller' ? [
+                    { label: 'Telecom Permit', value: operator.telecomPermit || '—' },
+                    { label: 'Supported Networks', value: operator.supportedNetworks || '—' },
+                  ] : []),
+                  ...(operator.partnerType === 'tour-guide' ? [
+                    { label: 'Languages', value: operator.guideLanguages || '—' },
+                    { label: 'Experience', value: operator.guideExperience || '—' },
+                    { label: 'Expertise', value: Array.isArray(operator.guideExpertise) ? operator.guideExpertise.join(', ') : (operator.guideExpertise || '—') },
+                  ] : []),
                 ].map((row, i) => (
                   <div key={i} className="flex justify-between py-3 border-b border-border/50 last:border-0">
                     <span className="text-fg/50">{row.label}</span>
@@ -345,45 +365,37 @@ const OperatorDetail = () => {
             {/* Compliance */}
             <div className="bg-white border border-border rounded-xl p-6">
               <h3 className="font-bold text-fg mb-5 flex items-center text-sm">
-                <ShieldCheck className="w-4 h-4 mr-2 text-primary" /> Compliance
+                <ShieldCheck className="w-4 h-4 mr-2 text-primary" /> Compliance & Access
               </h3>
               <div className="space-y-0 text-sm">
                 <div className="flex justify-between py-3 border-b border-border/50 items-center">
-                  <span className="text-fg/50">Verification Status</span>
-                  <div className="flex items-center gap-3">
-                    <span className={`font-semibold uppercase text-xs ${
+                  <span className="text-fg/50 flex items-center" title="Indicates if the operator has passed required background and document checks.">
+                    KYC Verification <Info className="w-3.5 h-3.5 ml-1.5 opacity-50 cursor-help" />
+                  </span>
+                  <select
+                    value={operator.verificationStatus || 'pending'}
+                    onChange={(e) => setConfirmKycStatus(e.target.value)}
+                    disabled={verifyMutation.isPending}
+                    className={`bg-bg border border-border rounded-lg px-2.5 py-1 text-xs font-bold uppercase focus:outline-none focus:border-primary cursor-pointer ${
                       operator.verificationStatus === 'approved' ? 'text-emerald-600' : 
                       operator.verificationStatus === 'rejected' ? 'text-red-600' : 'text-amber-600'
-                    }`}>
-                      {operator.verificationStatus}
-                    </span>
-                    {operator.verificationStatus === 'pending' && (
-                      <div className="flex gap-2">
-                        <button 
-                          onClick={() => verifyMutation.mutate('approved')}
-                          disabled={verifyMutation.isPending}
-                          className="px-2 py-1 text-xs font-medium bg-emerald-50 text-emerald-600 rounded-md hover:bg-emerald-100 transition-colors"
-                        >
-                          Approve
-                        </button>
-                        <button 
-                          onClick={() => verifyMutation.mutate('rejected')}
-                          disabled={verifyMutation.isPending}
-                          className="px-2 py-1 text-xs font-medium bg-red-50 text-red-600 rounded-md hover:bg-red-100 transition-colors"
-                        >
-                          Reject
-                        </button>
-                      </div>
-                    )}
-                  </div>
+                    }`}
+                  >
+                    <option value="pending">PENDING</option>
+                    <option value="under_review">UNDER REVIEW</option>
+                    <option value="approved">APPROVED</option>
+                    <option value="rejected">REJECTED</option>
+                  </select>
                 </div>
                 <div className="flex justify-between py-3 border-b border-border/50 items-center">
-                  <span className="text-fg/50">Current Tier</span>
+                  <span className="text-fg/50 flex items-center" title="Determines the operator's commission rates across all their packages.">
+                    Commission Tier <Info className="w-3.5 h-3.5 ml-1.5 opacity-50 cursor-help" />
+                  </span>
                   <select
                     value={operator.tier || 'SILVER'}
                     onChange={(e) => updateTierMutation.mutate(e.target.value)}
                     disabled={updateTierMutation.isPending}
-                    className="bg-bg border border-border rounded-lg px-2.5 py-1 text-sm font-bold focus:outline-none focus:border-primary"
+                    className="bg-bg border border-border rounded-lg px-2.5 py-1 text-sm font-bold focus:outline-none focus:border-primary cursor-pointer"
                   >
                     <option value="BRONZE">BRONZE</option>
                     <option value="SILVER">SILVER</option>
@@ -391,8 +403,10 @@ const OperatorDetail = () => {
                     <option value="PLATINUM">PLATINUM</option>
                   </select>
                 </div>
-                <div className="flex justify-between py-3">
-                  <span className="text-fg/50">Account State</span>
+                <div className="flex justify-between py-3 items-center">
+                  <span className="text-fg/50 flex items-center" title="Indicates if the operator can log into the platform and manage their offerings.">
+                    System Access <Info className="w-3.5 h-3.5 ml-1.5 opacity-50 cursor-help" />
+                  </span>
                   <span className="font-medium text-fg">
                     {operator.isActive ? 'Active & Running' : 'Suspended'}
                   </span>
@@ -440,7 +454,7 @@ const OperatorDetail = () => {
             {operator.businessOwner ? (
               <div className="space-y-0 text-sm">
                 {[
-                  { label: 'Full Name', value: `${operator.businessOwner.firstName} ${operator.businessOwner.lastName}` },
+                  { label: 'Full Name', value: `${operator.businessOwner.title ? operator.businessOwner.title + ' ' : ''}${operator.businessOwner.firstName} ${operator.businessOwner.lastName}` },
                   { label: 'Phone', value: operator.businessOwner.phone },
                   { label: 'NIN', value: <span className="font-mono">{operator.businessOwner.nin || 'Not Provided'}</span> },
                 ].map((row, i) => (
@@ -468,6 +482,41 @@ const OperatorDetail = () => {
         )}
 
       </div>
+      {/* KYC Status Confirmation Modal */}
+      {confirmKycStatus && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-card w-full max-w-sm rounded-3xl shadow-2xl border border-border p-8 transform transition-all scale-100">
+            <div className="flex flex-col items-center text-center mb-6">
+              <div className="w-16 h-16 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-500 mb-4">
+                <ShieldAlert className="w-8 h-8" />
+              </div>
+              <h3 className="text-xl font-bold tracking-tight">Change KYC Status?</h3>
+              <p className="text-sm text-fg/60 mt-2 font-medium">
+                Are you sure you want to change this operator's KYC status to <span className="font-bold text-fg uppercase">{confirmKycStatus}</span>? 
+                This may affect their ability to operate on the platform.
+              </p>
+            </div>
+            
+            <div className="flex space-x-3">
+              <button
+                onClick={() => setConfirmKycStatus(null)}
+                disabled={verifyMutation.isPending}
+                className="flex-1 font-bold py-3 px-4 bg-bg rounded-xl hover:bg-fg/5 transition-all border border-border text-sm"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => verifyMutation.mutate(confirmKycStatus)}
+                disabled={verifyMutation.isPending}
+                className="flex-1 font-bold py-3 px-4 bg-primary text-primary-fg rounded-xl hover:bg-primary/90 disabled:opacity-50 transition-all flex items-center justify-center shadow-md shadow-primary/20 text-sm"
+              >
+                {verifyMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Confirm Change'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </DashboardLayout>
   );
 };

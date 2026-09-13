@@ -204,6 +204,7 @@ const OperatorManagement = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [partnerTypeFilter, setPartnerTypeFilter] = useState('tour-operator');
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -226,14 +227,40 @@ const OperatorManagement = () => {
       op.companyName?.toLowerCase().includes(search.toLowerCase()) ||
       op.email?.toLowerCase().includes(search.toLowerCase());
     const matchStatus = statusFilter === 'all' || op.verificationStatus === statusFilter;
-    return matchSearch && matchStatus;
+    const matchType = op.partnerType === partnerTypeFilter;
+    return matchSearch && matchStatus && matchType;
   });
+
+  const partnerTypes = [
+    { id: 'tour-operator', label: 'Tour Operators' },
+    { id: 'transport', label: 'Transport' },
+    { id: 'sim-seller', label: 'SIM Sellers' },
+    { id: 'tour-guide', label: 'Tour Guides' },
+    { id: 'exchange-agent', label: 'Exchange Agents' },
+  ];
 
   return (
     <DashboardLayout title="Operators">
       {/* Page Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-fg tracking-tight">Operators</h1>
+      </div>
+
+      {/* Partner Type Tabs */}
+      <div className="flex space-x-1 border-b border-border mb-6 overflow-x-auto hide-scrollbar">
+        {partnerTypes.map(type => (
+          <button
+            key={type.id}
+            onClick={() => setPartnerTypeFilter(type.id)}
+            className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+              partnerTypeFilter === type.id
+                ? 'border-primary text-primary'
+                : 'border-transparent text-fg/60 hover:text-fg hover:border-border'
+            }`}
+          >
+            {type.label}
+          </button>
+        ))}
       </div>
 
       {/* Filters Row */}
@@ -280,7 +307,7 @@ const OperatorManagement = () => {
               <thead>
                 <tr className="border-b border-border">
                   <th className="text-left px-5 py-4 text-[11px] font-bold text-fg/50 uppercase tracking-wider">No</th>
-                  <th className="text-left px-5 py-4 text-[11px] font-bold text-fg/50 uppercase tracking-wider">Company</th>
+                  <th className="text-left px-5 py-4 text-[11px] font-bold text-fg/50 uppercase tracking-wider">Company / Name</th>
                   <th className="text-left px-5 py-4 text-[11px] font-bold text-fg/50 uppercase tracking-wider">Verification</th>
                   <th className="text-left px-5 py-4 text-[11px] font-bold text-fg/50 uppercase tracking-wider">Email</th>
                   <th className="text-left px-5 py-4 text-[11px] font-bold text-fg/50 uppercase tracking-wider">Phone</th>

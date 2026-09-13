@@ -234,11 +234,11 @@ const DetailItem = ({ label, value, icon }) => (
 
 const StatusBadge = ({ status }) => {
     switch (status) {
-        case 'pending_review':
+        case 'PENDING':
             return <span className="inline-flex items-center px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-amber-500/10 text-amber-500 border border-amber-500/30 shadow-sm"><Clock className="w-3.5 h-3.5 mr-1.5" /> Pending Review</span>;
-        case 'approved':
+        case 'APPROVED':
             return <span className="inline-flex items-center px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-green-500/10 text-green-500 border border-green-500/30 shadow-sm"><CheckCircle className="w-3.5 h-3.5 mr-1.5" /> Approved</span>;
-        case 'rejected':
+        case 'REJECTED':
             return <span className="inline-flex items-center px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-red-500/10 text-red-500 border border-red-500/30 shadow-sm"><XCircle className="w-3.5 h-3.5 mr-1.5" /> Rejected</span>;
         default:
             return <span className="px-3 py-1 rounded bg-fg/10 text-xs font-bold">{status}</span>;

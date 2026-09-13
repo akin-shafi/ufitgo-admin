@@ -47,6 +47,26 @@ const PackageDetail = () => {
     }
   });
 
+  const toggleStatusMutation = useMutation({
+    mutationFn: (status) => api.patch(`/admin/operator-auth/packages/${id}/status`, { status }),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['package-detail', id]);
+    },
+    onError: (err) => {
+      alert('Failed to update status: ' + err.message);
+    }
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: () => api.delete(`/admin/operator-auth/packages/${id}`),
+    onSuccess: () => {
+      navigate('/packages');
+    },
+    onError: (err) => {
+      alert('Failed to delete package: ' + err.message);
+    }
+  });
+
   const pkg = packageRes;
   const bookings = bookingsRes?.data || [];
   const commissions = commissionsRes?.data || [];
@@ -100,6 +120,29 @@ const PackageDetail = () => {
             </span>
           </h1>
           <p className="text-fg/60 mt-1">Operated by <span className="font-bold text-fg">{pkg.operator?.companyName || 'Unknown Operator'}</span></p>
+        </div>
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={() => {
+              const newStatus = pkg.status === 'active' ? 'inactive' : 'active';
+              toggleStatusMutation.mutate(newStatus);
+            }}
+            disabled={toggleStatusMutation.isPending}
+            className="px-4 py-2 bg-bg border border-border text-fg rounded-xl text-sm font-bold hover:border-primary transition-colors disabled:opacity-50"
+          >
+            {pkg.status === 'active' ? 'Deactivate' : 'Activate'}
+          </button>
+          <button 
+            onClick={() => {
+              if (window.confirm("Are you sure you want to delete this package? This cannot be undone.")) {
+                deleteMutation.mutate();
+              }
+            }}
+            disabled={deleteMutation.isPending}
+            className="px-4 py-2 bg-red-500/10 text-red-500 border border-red-500/20 rounded-xl text-sm font-bold hover:bg-red-500 hover:text-white transition-colors disabled:opacity-50"
+          >
+            Delete
+          </button>
         </div>
       </div>
 

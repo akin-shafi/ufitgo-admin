@@ -8,12 +8,20 @@ import { Link } from 'react-router-dom';
 const VerificationDashboard = () => {
     const [statusFilter, setStatusFilter] = useState('');
 
-    const { data, isLoading, } = useQuery({
-        queryKey: ['kyc-verifications', statusFilter],
-        queryFn: () => api.get(`/admin/kyc/upgrades${statusFilter ? `?status=${statusFilter}` : ''}`).then(res => res.data)
+    const { data, isLoading } = useQuery({
+        queryKey: ['kyc-verifications'],
+        queryFn: () => api.get(`/admin/kyc/upgrades`).then(res => res.data)
     });
 
-    const requests = data?.data || [];
+    const allRequests = data?.data || [];
+    const requests = statusFilter ? allRequests.filter(req => req.status === statusFilter) : allRequests;
+
+    const counts = {
+        '': allRequests.length,
+        'PENDING': allRequests.filter(r => r.status === 'PENDING').length,
+        'APPROVED': allRequests.filter(r => r.status === 'APPROVED').length,
+        'REJECTED': allRequests.filter(r => r.status === 'REJECTED').length,
+    };
 
     return (
         <DashboardLayout title="KYC Verification Management">
@@ -32,7 +40,7 @@ const VerificationDashboard = () => {
                                     onClick={() => setStatusFilter(s)}
                                     className={`px-4 py-1.5 text-xs font-bold rounded-lg transition-all capitalize ${statusFilter === s ? 'bg-primary text-secondary' : 'hover:bg-fg/5 text-fg/60'}`}
                                 >
-                                    {s === '' ? 'All' : s.replace('_', ' ')}
+                                    {s === '' ? 'All' : s.replace('_', ' ')} ({counts[s]})
                                 </button>
                             ))}
                         </div>
@@ -75,7 +83,7 @@ const VerificationDashboard = () => {
                                             {new Date(req.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
                                         </td>
                                         <td className="px-6 py-4 text-right">
-                                            <Link to={`/kyc-verifications/${req.id}`} className="bg-primary/10 hover:bg-primary/20 p-2 px-3 rounded-lg transition-all inline-flex items-center text-xs font-bold text-primary ">
+                                            <Link to={`/verifications/${req.id}`} className="bg-primary/10 hover:bg-primary/20 p-2 px-3 rounded-lg transition-all inline-flex items-center text-xs font-bold text-primary ">
                                                 <Eye className="w-4 h-4 mr-1.5" />
                                                 Process
                                             </Link>
