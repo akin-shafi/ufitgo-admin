@@ -49,12 +49,36 @@ const OperatorDetail = () => {
   });
 
   const suspendMutation = useMutation({
-    mutationFn: () => api.patch(`/admin/operator-auth/operators/${id}/suspend`),
+    mutationFn: () => api.patch(`/admin/operator-auth/users/${id}/toggle-status`),
     onSuccess: () => {
+      queryClient.invalidateQueries(['operatorDossier', id]);
       toast.success('Operator status updated');
-      queryClient.invalidateQueries(['operator-dossier', id]);
     },
-    onError: () => toast.error('Failed to update operator status')
+    onError: (error) => {
+      toast.error('Failed to update operator status: ' + (error.response?.data?.message || error.message));
+    }
+  });
+
+  const verifyMutation = useMutation({
+    mutationFn: (status) => api.patch(`/admin/operators/${id}/verification/${status}`),
+    onSuccess: (_, status) => {
+      queryClient.invalidateQueries(['operatorDossier', id]);
+      toast.success(`Operator successfully ${status}`);
+    },
+    onError: (error) => {
+      toast.error('Failed to update verification status: ' + (error.response?.data?.message || error.message));
+    }
+  });
+
+  const revokeMutation = useMutation({
+    mutationFn: () => api.delete(`/admin/operator-auth/users/${id}`),
+    onSuccess: () => {
+      toast.success('Operator access revoked');
+      navigate('/operators');
+    },
+    onError: (error) => {
+      toast.error('Failed to revoke operator access: ' + (error.response?.data?.message || error.message));
+    }
   });
 
   if (isLoading) {
@@ -143,8 +167,27 @@ const OperatorDetail = () => {
             {showActions && (
               <div className="absolute right-0 mt-2 w-48 bg-white border border-border rounded-xl shadow-xl z-20 py-1 overflow-hidden">
                 <button className="w-full text-left px-4 py-2.5 text-sm text-fg hover:bg-gray-50 transition-colors">Edit Details</button>
-                <button className="w-full text-left px-4 py-2.5 text-sm text-fg hover:bg-gray-50 transition-colors">Change Tier</button>
-                <button className="w-full text-left px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-colors">Revoke Access</button>
+                <button 
+                  onClick={() => {
+                    const tier = window.prompt("Enter new tier (e.g. tier-1, tier-2, tier-3):", operator.tier);
+                    if (tier) updateTierMutation.mutate(tier);
+                    setShowActions(false);
+                  }}
+                  className="w-full text-left px-4 py-2.5 text-sm text-fg hover:bg-gray-50 transition-colors"
+                >
+                  Change Tier
+                </button>
+                <button 
+                  onClick={() => {
+                    if (window.confirm("Are you sure you want to revoke this operator's access? This action cannot be undone.")) {
+                      revokeMutation.mutate();
+                    }
+                    setShowActions(false);
+                  }}
+                  className="w-full text-left px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-colors"
+                >
+                  Revoke Access
+                </button>
               </div>
             )}
           </div>
@@ -305,14 +348,34 @@ const OperatorDetail = () => {
                 <ShieldCheck className="w-4 h-4 mr-2 text-primary" /> Compliance
               </h3>
               <div className="space-y-0 text-sm">
-                <div className="flex justify-between py-3 border-b border-border/50">
+                <div className="flex justify-between py-3 border-b border-border/50 items-center">
                   <span className="text-fg/50">Verification Status</span>
-                  <span className={`font-semibold uppercase text-xs ${
-                    operator.verificationStatus === 'approved' ? 'text-emerald-600' : 
-                    operator.verificationStatus === 'rejected' ? 'text-red-600' : 'text-amber-600'
-                  }`}>
-                    {operator.verificationStatus}
-                  </span>
+                  <div className="flex items-center gap-3">
+                    <span className={`font-semibold uppercase text-xs ${
+                      operator.verificationStatus === 'approved' ? 'text-emerald-600' : 
+                      operator.verificationStatus === 'rejected' ? 'text-red-600' : 'text-amber-600'
+                    }`}>
+                      {operator.verificationStatus}
+                    </span>
+                    {operator.verificationStatus === 'pending' && (
+                      <div className="flex gap-2">
+                        <button 
+                          onClick={() => verifyMutation.mutate('approved')}
+                          disabled={verifyMutation.isPending}
+                          className="px-2 py-1 text-xs font-medium bg-emerald-50 text-emerald-600 rounded-md hover:bg-emerald-100 transition-colors"
+                        >
+                          Approve
+                        </button>
+                        <button 
+                          onClick={() => verifyMutation.mutate('rejected')}
+                          disabled={verifyMutation.isPending}
+                          className="px-2 py-1 text-xs font-medium bg-red-50 text-red-600 rounded-md hover:bg-red-100 transition-colors"
+                        >
+                          Reject
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <div className="flex justify-between py-3 border-b border-border/50 items-center">
                   <span className="text-fg/50">Current Tier</span>
@@ -364,41 +427,6 @@ const OperatorDetail = () => {
               </div>
             </div>
 
-            {/* BDC Verification Checkboxes */}
-            {(operator.partnerType === 'exchange-agent' || operator.partnerType === 'tour-operator') && (
-              <div className="bg-white border border-border rounded-xl p-6 md:col-span-2">
-                <h3 className="font-bold text-fg mb-5 flex items-center text-sm">
-                  <ShieldCheck className="w-4 h-4 mr-2 text-primary" /> Operator Verification (BDC)
-                </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {[
-                    { key: 'cbn_license_verified', label: 'Official CBN License Number' },
-                    { key: 'cac_registration_verified', label: 'CAC Registration Check' },
-                    { key: 'abcon_status_verified', label: 'Active ABCON Status' },
-                    { key: 'physical_office_verified', label: 'Physical Office Verification' },
-                  ].map((field) => (
-                    <label key={field.key} className="flex items-center gap-3 cursor-pointer p-3.5 bg-bg rounded-xl border border-border hover:border-primary/30 transition-colors">
-                      <input
-                        type="checkbox"
-                        checked={!!operator[field.key]}
-                        onChange={async (e) => {
-                          const checked = e.target.checked;
-                          try {
-                            await api.patch(`/admin/operators/${id}/directory-fields`, { [field.key]: checked });
-                            toast.success(`${field.label} updated!`);
-                            queryClient.invalidateQueries(['operator-dossier', id]);
-                          } catch {
-                            toast.error(`Failed to update ${field.label}`);
-                          }
-                        }}
-                        className="w-4.5 h-4.5 rounded border-gray-300 text-primary focus:ring-primary accent-primary"
-                      />
-                      <span className="text-sm font-medium text-fg">{field.label}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
         )}
 

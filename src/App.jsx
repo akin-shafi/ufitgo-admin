@@ -31,11 +31,16 @@ import TechArchitectureScreen from '@/screens/guide/TechArchitectureScreen';
 import SavingsArchitectureScreen from '@/screens/guide/SavingsArchitectureScreen';
 import TravelFxArchitectureScreen from '@/screens/guide/TravelFxArchitectureScreen';
 
-// import CustomerManagement from '@/screens/customers/CustomerManagement';
-// import CustomerDetail from '@/screens/customers/CustomerDetail';
+import CustomerManagement from '@/screens/customers/CustomerManagement';
+import CustomerDetail from '@/screens/customers/CustomerDetail';
 
 import PackageManagement from '@/screens/packages/PackageManagement';
 import PackageDetail from '@/screens/packages/PackageDetail';
+
+import RevenueAnalytics from '@/screens/analytics/RevenueAnalytics';
+import BookingsAnalytics from '@/screens/analytics/BookingsAnalytics';
+import CustomersAnalytics from '@/screens/analytics/CustomersAnalytics';
+import OperatorsAnalytics from '@/screens/analytics/OperatorsAnalytics';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -60,8 +65,8 @@ function App() {
               <Route path="/" element={<SmartDashboard />} />
               <Route path="/extensions" element={<ExtensionsLibrary />} />
               <Route path="/users" element={<UserManagement />} />
-              {/* <Route path="/customers" element={<CustomerManagement />} />
-              <Route path="/customers/:id" element={<CustomerDetail />} /> */}
+              <Route path="/customers" element={<CustomerManagement />} />
+              <Route path="/customers/:id" element={<CustomerDetail />} />
               <Route path="/operators" element={<OperatorManagement />} />
               <Route path="/operators/:id/create-package" element={<CreatePackagePage />} />
               <Route path="/operators/:id" element={<OperatorDetail />} />
@@ -83,6 +88,10 @@ function App() {
               <Route path="/tech-architecture" element={<TechArchitectureScreen />} />
               <Route path="/savings-architecture" element={<SavingsArchitectureScreen />} />
               <Route path="/travel-fx-architecture" element={<TravelFxArchitectureScreen />} />
+              <Route path="/analytics/revenue" element={<RevenueAnalytics />} />
+              <Route path="/analytics/bookings" element={<BookingsAnalytics />} />
+              <Route path="/analytics/customers" element={<CustomersAnalytics />} />
+              <Route path="/analytics/operators" element={<OperatorsAnalytics />} />
               {/* Add more protected routes as needed */}
             </Route>
           </Routes>

@@ -25,7 +25,7 @@ const StatCard = ({ title, value, change, icon, onClick }) => (
   </div>
 );
 
-const DrilldownModal = ({ isOpen, onClose, title, data }) => {
+const DrilldownModal = ({ isOpen, onClose, title }) => {
   if (!isOpen) return null;
 
   return (
@@ -93,11 +93,16 @@ const DrilldownModal = ({ isOpen, onClose, title, data }) => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5 bg-bg">
-                  {[1, 2, 3, 4].map((i) => (
-                    <tr key={i} className="hover:bg-fg/[0.02] transition-colors">
-                      <td className="px-4 py-3 text-fg/70">Today, 10:4{i} AM</td>
-                      <td className="px-4 py-3 font-medium">Auto-generated Metric #{i}</td>
-                      <td className="px-4 py-3 text-right font-mono">+{(Math.random() * 100).toFixed(2)}</td>
+                  {[
+                    { id: 1, time: 'Today, 10:41 AM', label: 'Auto-generated Metric #1', value: '92.40' },
+                    { id: 2, time: 'Today, 10:42 AM', label: 'Auto-generated Metric #2', value: '74.60' },
+                    { id: 3, time: 'Today, 10:43 AM', label: 'Auto-generated Metric #3', value: '63.80' },
+                    { id: 4, time: 'Today, 10:44 AM', label: 'Auto-generated Metric #4', value: '88.10' },
+                  ].map((row) => (
+                    <tr key={row.id} className="hover:bg-fg/[0.02] transition-colors">
+                      <td className="px-4 py-3 text-fg/70">{row.time}</td>
+                      <td className="px-4 py-3 font-medium">{row.label}</td>
+                      <td className="px-4 py-3 text-right font-mono">+{row.value}</td>
                       <td className="px-4 py-3 text-right">
                         <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-500/10 text-green-500">
                           COMPLETED

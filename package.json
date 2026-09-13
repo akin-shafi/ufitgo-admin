@@ -10,6 +10,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@mui/material": "^9.4.0",
+    "@mui/styled-engine": "^9.4.0",
     "@tanstack/react-query": "^5.90.21",
     "autoprefixer": "^10.4.27",
     "axios": "^1.13.6",
