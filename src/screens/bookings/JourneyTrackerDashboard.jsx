@@ -14,6 +14,7 @@ const JourneyTrackerDashboard = () => {
   const [isFollowUpModalOpen, setIsFollowUpModalOpen] = useState(false);
   const [isSurchargeModalOpen, setIsSurchargeModalOpen] = useState(false);
   const [isDocumentsModalOpen, setIsDocumentsModalOpen] = useState(false);
+  const [isJourneyModalOpen, setIsJourneyModalOpen] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState(null);
 
   // Form states
@@ -185,7 +186,14 @@ const JourneyTrackerDashboard = () => {
                 </tr>
               ) : (
                 filteredBookings?.map((booking) => (
-                  <tr key={booking.id} className="hover:bg-bg/50">
+                  <tr
+                    key={booking.id}
+                    className="hover:bg-bg/50 cursor-pointer"
+                    onClick={() => {
+                      setSelectedBooking(booking);
+                      setIsJourneyModalOpen(true);
+                    }}
+                  >
                     <td className="px-6 py-4">
                       <div className="font-medium">{booking.bookingRef}</div>
                       <div className="text-xs text-fg/60 mt-1">{booking.packageName}</div>
@@ -234,7 +242,8 @@ const JourneyTrackerDashboard = () => {
                     <td className="px-6 py-4 text-right">
                       <div className="flex justify-end space-x-2">
                         <button
-                          onClick={() => {
+                          onClick={(event) => {
+                            event.stopPropagation();
                             setSelectedBooking(booking);
                             setIsDocumentsModalOpen(true);
                           }}
@@ -244,7 +253,8 @@ const JourneyTrackerDashboard = () => {
                           <ClipboardCheck className="w-4 h-4" />
                         </button>
                         <button 
-                          onClick={() => {
+                          onClick={(event) => {
+                            event.stopPropagation();
                             setSelectedBooking(booking);
                             setUpdateStage(booking.currentJourneyStage);
                             setAssignedConcierge(booking.assignedConcierge || '');
@@ -256,7 +266,8 @@ const JourneyTrackerDashboard = () => {
                           <Edit className="w-4 h-4" />
                         </button>
                         <button 
-                          onClick={() => {
+                          onClick={(event) => {
+                            event.stopPropagation();
                             setSelectedBooking(booking);
                             setIsFollowUpModalOpen(true);
                           }}
@@ -266,7 +277,8 @@ const JourneyTrackerDashboard = () => {
                           <MessageSquare className="w-4 h-4" />
                         </button>
                         <button 
-                          onClick={() => {
+                          onClick={(event) => {
+                            event.stopPropagation();
                             setSelectedBooking(booking);
                             setIsSurchargeModalOpen(true);
                           }}
@@ -277,7 +289,8 @@ const JourneyTrackerDashboard = () => {
                         </button>
                         {booking.status === 'PENDING' && (
                           <button 
-                            onClick={() => {
+                            onClick={(event) => {
+                              event.stopPropagation();
                               const reason = window.prompt('Enter cancellation reason (required):');
                               if (reason) {
                                 deleteBookingMutation.mutate({ id: booking.id, reason });
@@ -298,6 +311,13 @@ const JourneyTrackerDashboard = () => {
           </table>
         </div>
       </div>
+
+      {isJourneyModalOpen && selectedBooking && (
+        <JourneyDetailModal
+          booking={selectedBooking}
+          onClose={() => { setIsJourneyModalOpen(false); setSelectedBooking(null); }}
+        />
+      )}
 
       {/* Update Modal */}
       {isUpdateModalOpen && selectedBooking && (
@@ -576,6 +596,98 @@ function DocumentReviewModal({ booking, isSaving, onClose, onSave }) {
       </div>
     </div>
   );
+}
+
+const JOURNEY_STAGES = [
+  ['BOOKING_SECURED', 'Booking secured'],
+  ['DOCUMENTS_PENDING', 'Documents pending'],
+  ['DOCUMENTS_SUBMITTED', 'Documents submitted'],
+  ['CONCIERGE_REVIEW', 'Concierge review'],
+  ['PAYMENT_PENDING', 'Payment pending'],
+  ['COMPLETED', 'Completed'],
+];
+
+function JourneyDetailModal({ booking, onClose }) {
+  const currentStage = String(booking.currentJourneyStage || '').toUpperCase();
+  const review = booking.conciergeDocumentReview || {};
+  const reviewedCount = Object.values(review).filter((item) => item?.status && item.status !== 'missing').length;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      <div className="bg-card w-full max-w-3xl max-h-[90vh] rounded-2xl shadow-xl overflow-hidden flex flex-col">
+        <div className="p-6 border-b border-border flex justify-between items-center">
+          <div>
+            <p className="text-xs uppercase tracking-wider text-fg/50">Journey overview</p>
+            <h3 className="font-bold text-xl mt-1">{booking.bookingRef}</h3>
+            <p className="text-sm text-fg/60 mt-1">{booking.pilgrimName} · {booking.packageName}</p>
+          </div>
+          <button onClick={onClose} className="text-fg/40 hover:text-fg" aria-label="Close">✕</button>
+        </div>
+
+        <div className="p-6 overflow-y-auto space-y-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <JourneyFact label="Current stage" value={getJourneyLabel(currentStage)} />
+            <JourneyFact label="Concierge" value={booking.assignedConcierge || 'Unassigned'} />
+            <JourneyFact label="Last contact" value={booking.lastContactedAt ? new Date(booking.lastContactedAt).toLocaleString() : 'No contact recorded'} />
+          </div>
+
+          <section>
+            <h4 className="font-semibold mb-3">Journey so far</h4>
+            <div className="space-y-3">
+              {JOURNEY_STAGES.map(([stage, label], index) => {
+                const isCurrent = currentStage === stage;
+                const isReached = isCurrent || (booking.stageEnteredAt && index < JOURNEY_STAGES.findIndex(([value]) => value === currentStage));
+                return (
+                  <div key={stage} className="flex items-center gap-3">
+                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${isReached ? 'bg-primary text-white' : 'bg-bg border border-border text-fg/40'}`}>
+                      {isReached ? '✓' : index + 1}
+                    </div>
+                    <span className={isCurrent ? 'font-semibold text-primary' : isReached ? 'text-fg' : 'text-fg/40'}>{label}</span>
+                    {isCurrent && <span className="text-xs text-primary/70">Current</span>}
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+
+          <section className="border border-border rounded-xl p-4">
+            <div className="flex justify-between items-center">
+              <h4 className="font-semibold">Document readiness</h4>
+              <span className="text-sm text-fg/60">{reviewedCount} reviewed</span>
+            </div>
+            <p className="text-sm text-fg/60 mt-2">Open the checklist action to update requirements, review notes, and approval status.</p>
+          </section>
+
+          <section>
+            <h4 className="font-semibold mb-2">Operations history</h4>
+            <div className="text-sm text-fg/70 space-y-1">
+              <p>Stage entered: {booking.stageEnteredAt ? new Date(booking.stageEnteredAt).toLocaleString() : 'Not recorded'}</p>
+              <p>Follow-ups: {booking.followUpCount || 0}</p>
+              {booking.nextFollowUpAt && <p>Next follow-up: {new Date(booking.nextFollowUpAt).toLocaleDateString()}</p>}
+              {booking.stageNotes ? <p className="whitespace-pre-wrap mt-3 text-fg/60">{booking.stageNotes}</p> : <p className="text-fg/40">No notes recorded.</p>}
+            </div>
+          </section>
+        </div>
+
+        <div className="p-4 border-t border-border flex justify-end">
+          <button onClick={onClose} className="btn btn-primary">Close</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function JourneyFact({ label, value }) {
+  return (
+    <div className="bg-bg/50 border border-border rounded-xl p-3">
+      <p className="text-xs text-fg/50 uppercase tracking-wide">{label}</p>
+      <p className="text-sm font-medium mt-1 truncate" title={value}>{value}</p>
+    </div>
+  );
+}
+
+function getJourneyLabel(stage) {
+  return stage ? stage.replace(/_/g, ' ') : 'Unknown';
 }
 
 export default JourneyTrackerDashboard;
