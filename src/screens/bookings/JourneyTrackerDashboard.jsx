@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/api/client';
@@ -6,6 +7,7 @@ import { Search, Filter, MessageSquare, Edit, UserPlus, Clock, Loader2, CheckCir
 import { toast } from 'react-hot-toast';
 
 const JourneyTrackerDashboard = () => {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [stageFilter, setStageFilter] = useState('ALL');
   const queryClient = useQueryClient();
@@ -189,10 +191,7 @@ const JourneyTrackerDashboard = () => {
                   <tr
                     key={booking.id}
                     className="hover:bg-bg/50 cursor-pointer"
-                    onClick={() => {
-                      setSelectedBooking(booking);
-                      setIsJourneyModalOpen(true);
-                    }}
+                    onClick={() => navigate(`/journey-tracker/${booking.id}`)}
                   >
                     <td className="px-6 py-4">
                       <div className="font-medium">{booking.bookingRef}</div>
