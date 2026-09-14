@@ -25,7 +25,7 @@ const StatCard = ({ title, value, change, icon, onClick }) => (
   </div>
 );
 
-const DrilldownModal = ({ isOpen, onClose, title }) => {
+const DrilldownModal = ({ isOpen, onClose, title, data }) => {
   if (!isOpen) return null;
 
   return (
@@ -50,38 +50,14 @@ const DrilldownModal = ({ isOpen, onClose, title }) => {
 
         {/* Content Body */}
         <div className="p-6 overflow-y-auto space-y-6">
-          
-          {/* Mock Chart Area */}
-          <div className="card border-dashed border-white/10 bg-fg/[0.01]">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="font-semibold flex items-center gap-2"><TrendingUp className="w-4 h-4 text-accent" /> 30-Day Trend</h3>
-              <div className="flex gap-2">
-                <span className="text-xs font-medium px-2 py-1 bg-white/5 rounded-md cursor-pointer hover:bg-white/10">7D</span>
-                <span className="text-xs font-medium px-2 py-1 bg-primary/20 text-primary rounded-md cursor-pointer">30D</span>
-                <span className="text-xs font-medium px-2 py-1 bg-white/5 rounded-md cursor-pointer hover:bg-white/10">1Y</span>
-              </div>
-            </div>
-            {/* Fake Bar Chart Visualization */}
-            <div className="h-48 flex items-end justify-between gap-2 px-2 pb-2 border-b border-white/10">
-              {[40, 25, 60, 45, 80, 55, 90, 70, 30, 85, 60, 100].map((h, i) => (
-                <div key={i} className="w-full bg-primary/20 hover:bg-primary/50 transition-colors rounded-t-sm relative group cursor-pointer" style={{ height: `${h}%` }}>
-                  <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-fg text-bg text-[10px] font-bold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10 pointer-events-none">
-                    Value: {h * 12}
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="flex justify-between mt-2 text-[10px] text-fg/40 px-2 font-medium">
-              <span>Week 1</span>
-              <span>Week 2</span>
-              <span>Week 3</span>
-              <span>Week 4</span>
-            </div>
-          </div>
-
-          {/* Breakdown Table */}
           <div>
-            <h3 className="font-semibold mb-4 flex items-center gap-2"><Calendar className="w-4 h-4 text-secondary" /> Recent Activity</h3>
+            <h3 className="font-semibold mb-4 flex items-center gap-2"><TrendingUp className="w-4 h-4 text-accent" /> Live breakdown</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+              <div className="bg-fg/[0.04] rounded-xl p-4"><p className="text-xs text-fg/60">Bookings</p><p className="text-2xl font-bold mt-1">{data?.totalBookings || 0}</p></div>
+              <div className="bg-fg/[0.04] rounded-xl p-4"><p className="text-xs text-fg/60">Packages</p><p className="text-2xl font-bold mt-1">{data?.totalPackages || 0}</p></div>
+              <div className="bg-fg/[0.04] rounded-xl p-4"><p className="text-xs text-fg/60">Revenue</p><p className="text-2xl font-bold mt-1">₦{((data?.totalRevenue || 0) / 1000000).toFixed(1)}M</p></div>
+            </div>
+            <h3 className="font-semibold mb-4 flex items-center gap-2"><Calendar className="w-4 h-4 text-secondary" /> Recent activity from live stats</h3>
             <div className="overflow-hidden rounded-xl border border-white/5">
               <table className="w-full text-sm text-left">
                 <thead className="bg-fg/[0.03] text-fg/60 text-xs uppercase font-semibold">
@@ -93,23 +69,19 @@ const DrilldownModal = ({ isOpen, onClose, title }) => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5 bg-bg">
-                  {[
-                    { id: 1, time: 'Today, 10:41 AM', label: 'Auto-generated Metric #1', value: '92.40' },
-                    { id: 2, time: 'Today, 10:42 AM', label: 'Auto-generated Metric #2', value: '74.60' },
-                    { id: 3, time: 'Today, 10:43 AM', label: 'Auto-generated Metric #3', value: '63.80' },
-                    { id: 4, time: 'Today, 10:44 AM', label: 'Auto-generated Metric #4', value: '88.10' },
-                  ].map((row) => (
+                  {(data?.trendingPackages || []).map((row) => (
                     <tr key={row.id} className="hover:bg-fg/[0.02] transition-colors">
-                      <td className="px-4 py-3 text-fg/70">{row.time}</td>
-                      <td className="px-4 py-3 font-medium">{row.label}</td>
-                      <td className="px-4 py-3 text-right font-mono">+{row.value}</td>
+                      <td className="px-4 py-3 text-fg/70">Live</td>
+                      <td className="px-4 py-3 font-medium">{row.title || `Package #${row.packageId}`}</td>
+                      <td className="px-4 py-3 text-right font-mono">{row.bookingCount || 0} bookings</td>
                       <td className="px-4 py-3 text-right">
                         <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-500/10 text-green-500">
-                          COMPLETED
+                          LIVE
                         </span>
                       </td>
                     </tr>
                   ))}
+                  {!data?.trendingPackages?.length && <tr><td colSpan="4" className="px-4 py-6 text-center text-fg/50">No live breakdown available for this period.</td></tr>}
                 </tbody>
               </table>
             </div>
