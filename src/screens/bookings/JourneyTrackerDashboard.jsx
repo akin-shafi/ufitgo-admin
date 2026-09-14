@@ -496,26 +496,31 @@ const DOCUMENT_REQUIREMENTS = [
     type: 'passport',
     label: 'Valid Passport',
     description: 'Must have at least 6 months validity from the travel date and 2 blank pages.',
+    supportsNotApplicable: false,
   },
   {
     type: 'vaccination',
     label: 'Vaccination Certificate',
     description: 'Meningitis ACWY is required, plus any current health requirements such as COVID-19 or Yellow Fever based on origin.',
+    supportsNotApplicable: false,
   },
   {
     type: 'passport_photo',
     label: 'Passport Photos',
     description: 'Recent passport-sized colour photos taken against a plain white background.',
+    supportsNotApplicable: false,
   },
   {
     type: 'relationship_proof',
     label: 'Proof of Relationship',
     description: 'Marriage certificate for spouses, or birth certificates for children travelling as a family.',
+    supportsNotApplicable: true,
   },
   {
     type: 'shahadah',
     label: 'Shahadah Certificate',
     description: 'Official letter from an Islamic centre when a convert passport does not have a Muslim name.',
+    supportsNotApplicable: true,
   },
 ];
 
@@ -567,6 +572,7 @@ function DocumentReviewModal({ booking, isSaving, onClose, onSave }) {
                     <option value="received">Received</option>
                     <option value="approved">Approved</option>
                     <option value="rejected">Rejected</option>
+                    {document.supportsNotApplicable && <option value="not_applicable">Not applicable</option>}
                   </select>
                 </div>
                 <input
