@@ -7,19 +7,21 @@ import { Search, Loader2, Package as PackageIcon, Calendar, Plus } from 'lucide-
 
 const PackageManagement = () => {
   const [activeTab, setActiveTab] = useState('active'); // 'active' or 'past'
+  const [collection, setCollection] = useState('all');
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const limit = 10;
   const navigate = useNavigate();
 
   const { data: response, isLoading } = useQuery({
-    queryKey: ['admin-packages', page, search, activeTab],
+    queryKey: ['admin-packages', page, search, activeTab, collection],
     queryFn: () => api.get('/admin/operator-auth/packages', {
       params: {
         page,
         limit,
         search,
-        status: activeTab
+        status: activeTab,
+        ...(activeTab === 'active' && collection !== 'all' ? { collection } : {}),
       }
     }).then(res => res.data),
     placeholderData: keepPreviousData,
@@ -64,12 +66,34 @@ const PackageManagement = () => {
           </button>
           <button 
             className={`btn ${activeTab === 'past' ? 'btn-primary' : 'btn-outline'}`}
-            onClick={() => { setActiveTab('past'); setPage(1); }}
+            onClick={() => { setActiveTab('past'); setCollection('all'); setPage(1); }}
           >
             Past Packages
           </button>
         </div>
       </div>
+
+      {activeTab === 'active' && (
+        <div className="flex flex-wrap items-center gap-2 mb-6" aria-label="Active package collection">
+          <span className="text-sm font-medium text-fg/60 mr-1">Active collection:</span>
+          {[
+            { value: 'all', label: 'All' },
+            { value: 'ramadan', label: 'Ramadan' },
+            { value: 'deal-of-week', label: 'Deal of the Week' },
+            { value: 'hajj', label: 'Hajj' },
+            { value: 'others', label: 'Others' },
+          ].map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              className={`btn ${collection === option.value ? 'btn-primary' : 'btn-outline'}`}
+              onClick={() => { setCollection(option.value); setPage(1); }}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+      )}
 
       {isLoading ? (
         <div className="flex justify-center py-20"><Loader2 className="w-10 h-10 animate-spin text-primary" /></div>
