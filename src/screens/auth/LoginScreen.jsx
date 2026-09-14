@@ -1,54 +1,16 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { UfitGoBrandMark } from '@/components/common/UfitGoBrandMark';
-import { Lock, Mail, Loader2, AlertCircle, Plane, Landmark, ShieldCheck, ChevronLeft, ChevronRight } from 'lucide-react';
-
-const slides = [
-  {
-    icon: <Plane className="w-12 h-12" />,
-    title: 'Hajj & Umrah Travel Management',
-    description: 'Monitor operator performance, compliance, and pilgrim journey readiness from one unified dashboard.',
-    gradient: 'from-amber-500 via-yellow-500 to-orange-400',
-    pattern: 'radial-gradient(circle at 20% 80%, rgba(255,255,255,0.08) 0%, transparent 50%)',
-  },
-  {
-    icon: <Landmark className="w-12 h-12" />,
-    title: 'Operations Overview',
-    description: 'Track platform activity, service health, and operational signals without the older banking-specific language.',
-    gradient: 'from-emerald-500 via-teal-500 to-cyan-500',
-    pattern: 'radial-gradient(circle at 80% 20%, rgba(255,255,255,0.08) 0%, transparent 50%)',
-  },
-  {
-    icon: <ShieldCheck className="w-12 h-12" />,
-    title: 'Platform Governance',
-    description: 'Manage users, operators, and system-wide notifications. Send targeted broadcasts to pilgrims across all regions.',
-    gradient: 'from-violet-500 via-purple-500 to-fuchsia-500',
-    pattern: 'radial-gradient(circle at 50% 50%, rgba(255,255,255,0.06) 0%, transparent 60%)',
-  },
-];
+import { Lock, Mail, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
 
 const LoginScreen = () => {
   const [email, setEmail] = useState('admin@ufitgo.com');
   const [password, setPassword] = useState('admin123');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [activeSlide, setActiveSlide] = useState(0);
   const { login } = useAuth();
   const navigate = useNavigate();
-
-  const nextSlide = useCallback(() => {
-    setActiveSlide((prev) => (prev + 1) % slides.length);
-  }, []);
-
-  const prevSlide = useCallback(() => {
-    setActiveSlide((prev) => (prev - 1 + slides.length) % slides.length);
-  }, []);
-
-  useEffect(() => {
-    const timer = setInterval(nextSlide, 5000);
-    return () => clearInterval(timer);
-  }, [nextSlide]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -64,90 +26,71 @@ const LoginScreen = () => {
     }
   };
 
-  const currentSlide = slides[activeSlide];
-
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row bg-bg">
-
-      {/* ─── Left: Carousel Panel ─── */}
+    <div className="min-h-screen flex flex-col lg:flex-row bg-bg overflow-x-hidden">
+      {/* ─── Left: Static Info Panel ─── */}
       <div
-        className={`
-          relative w-full lg:w-[55%] min-h-[280px] lg:min-h-screen
-          bg-gradient-to-br ${currentSlide.gradient}
-          flex flex-col justify-end
-          p-8 sm:p-12 lg:p-16
+        className="
+          relative w-full lg:w-[40%] min-h-[280px] lg:min-h-screen
+          bg-[#0B1C15]
+          hidden lg:flex flex-col justify-between
+          p-8 sm:p-12 lg:px-12 lg:py-14
           overflow-hidden
-          transition-all duration-700 ease-in-out
-        `}
+        "
       >
-        {/* Decorative shapes */}
-        <div className="absolute inset-0" style={{ background: currentSlide.pattern }} />
-        <div className="absolute -top-24 -right-24 w-72 h-72 rounded-full border border-white/10" />
-        <div className="absolute -bottom-16 -left-16 w-56 h-56 rounded-full border border-white/10" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full border border-white/5 hidden lg:block" />
-
         {/* Logo top-left */}
-        <div className="absolute top-6 left-6 sm:top-8 sm:left-8 lg:top-10 lg:left-12 flex items-center space-x-3 z-10">
-          <div className="relative rounded-xl bg-white/15 backdrop-blur-sm p-2 shadow-sm ring-1 ring-white/20">
-            <UfitGoBrandMark className="h-8 w-8" showDot={true} />
+        <div className="flex items-center space-x-2 z-10">
+          <div className="relative">
+            <UfitGoBrandMark className="h-8 w-8 text-white" showDot={true} />
           </div>
-          <span className="text-white/90 font-bold text-lg tracking-tight hidden sm:inline">UfitGo</span>
+          <span className="text-white font-bold tracking-tight text-xl font-serif">UfitGo</span>
         </div>
 
-        {/* Slide Content */}
-        <div className="relative z-10 max-w-lg mt-16 lg:mt-0">
-          <div
-            key={activeSlide}
-            className="animate-fadeSlideUp"
-          >
-            <div className="w-16 h-16 lg:w-20 lg:h-20 bg-white/15 backdrop-blur-sm rounded-2xl flex items-center justify-center text-white mb-6 lg:mb-8 shadow-lg shadow-black/10">
-              {currentSlide.icon}
+        {/* Content */}
+        <div className="relative z-10 flex-1 flex flex-col justify-center mt-12">
+          <h1 className="text-4xl lg:text-5xl font-black text-white leading-tight mb-6 font-serif">
+            Platform <br />
+            <span className="text-[#EAB308]">Governance</span>
+          </h1>
+          <p className="text-white/80 text-base leading-relaxed mb-10 max-w-sm">
+            Access the central control system to monitor performance, manage operators, and ensure compliance across the UfitGo ecosystem.
+          </p>
+
+          <div className="space-y-6">
+            <div className="flex items-start space-x-4">
+              <CheckCircle2 className="w-6 h-6 text-[#10B981] shrink-0 mt-0.5" />
+              <div>
+                <h3 className="text-white font-semibold mb-1">Operations Overview</h3>
+                <p className="text-white/60 text-sm">Track platform activity, service health, and operational signals globally.</p>
+              </div>
             </div>
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white leading-tight mb-3 lg:mb-4">
-              {currentSlide.title}
-            </h2>
-            <p className="text-white/75 text-sm sm:text-base lg:text-lg leading-relaxed max-w-md">
-              {currentSlide.description}
-            </p>
+            <div className="flex items-start space-x-4">
+              <CheckCircle2 className="w-6 h-6 text-[#10B981] shrink-0 mt-0.5" />
+              <div>
+                <h3 className="text-white font-semibold mb-1">Streamlined Controls</h3>
+                <p className="text-white/60 text-sm">Manage users, operators, and payments in one unified dashboard.</p>
+              </div>
+            </div>
+            <div className="flex items-start space-x-4">
+              <CheckCircle2 className="w-6 h-6 text-[#10B981] shrink-0 mt-0.5" />
+              <div>
+                <h3 className="text-white font-semibold mb-1">Verified Trust</h3>
+                <p className="text-white/60 text-sm">Oversee platform integrity and broadcast notifications securely.</p>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Carousel Controls */}
-        <div className="relative z-10 flex items-center justify-between mt-8 lg:mt-12">
-          {/* Dots */}
-          <div className="flex space-x-2">
-            {slides.map((_, i) => (
-              <button
-                key={i}
-                onClick={() => setActiveSlide(i)}
-                className={`
-                  h-2 rounded-full transition-all duration-500 
-                  ${i === activeSlide ? 'w-8 bg-white' : 'w-2 bg-white/30 hover:bg-white/50'}
-                `}
-              />
-            ))}
-          </div>
-
-          {/* Arrows */}
-          <div className="flex space-x-2">
-            <button
-              onClick={prevSlide}
-              className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-sm border border-white/10 flex items-center justify-center text-white hover:bg-white/20 transition-all"
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </button>
-            <button
-              onClick={nextSlide}
-              className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-sm border border-white/10 flex items-center justify-center text-white hover:bg-white/20 transition-all"
-            >
-              <ChevronRight className="w-5 h-5" />
-            </button>
-          </div>
+        {/* Footer */}
+        <div className="relative z-10 mt-12">
+          <p className="text-white/40 text-xs font-medium">
+            &copy; {new Date().getFullYear()} UfitGo. All rights reserved.
+          </p>
         </div>
       </div>
 
       {/* ─── Right: Login Form ─── */}
-      <div className="flex-1 flex flex-col justify-center items-center px-6 sm:px-12 lg:px-20 py-10 lg:py-0 relative">
+      <div className="flex-1 flex flex-col justify-center items-center px-6 sm:px-12 lg:px-20 py-10 lg:py-0 relative overflow-hidden">
         {/* Subtle background accent */}
         <div className="absolute top-0 right-0 w-80 h-80 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl pointer-events-none" />
         <div className="absolute bottom-0 left-0 w-64 h-64 bg-accent/5 rounded-full translate-y-1/2 -translate-x-1/2 blur-3xl pointer-events-none" />
@@ -233,10 +176,10 @@ const LoginScreen = () => {
               type="submit"
               disabled={loading}
               className="
-                w-full h-13 bg-secondary text-white font-bold rounded-xl 
-                hover:bg-secondary/90 active:scale-[0.99]
+                w-full h-13 bg-accent text-white font-bold rounded-xl 
+                hover:bg-accent/90 active:scale-[0.99]
                 transition-all duration-200
-                shadow-xl shadow-secondary/15
+                shadow-xl shadow-accent/15
                 flex items-center justify-center
                 disabled:opacity-60 disabled:cursor-not-allowed
               "
@@ -250,7 +193,7 @@ const LoginScreen = () => {
           </form>
 
           {/* Role Badges */}
-          <div className="mt-8 pt-6 border-t border-border">
+          <div className="mt-8 pt-6 border-t border-border hidden">
             <p className="text-[10px] font-bold text-fg/30 uppercase tracking-widest mb-3">Authorized Access For</p>
             <div className="flex flex-wrap gap-2">
               {[
