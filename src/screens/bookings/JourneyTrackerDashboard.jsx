@@ -500,7 +500,7 @@ const DOCUMENT_REQUIREMENTS = [
 ];
 
 function DocumentReviewModal({ booking, isSaving, onClose, onSave }) {
-  const review = booking.pilgrimDocuments?.find((document) => document.type === 'concierge_review') || {};
+  const review = booking.conciergeDocumentReview || {};
   const [drafts, setDrafts] = useState(() =>
     Object.fromEntries(DOCUMENT_REQUIREMENTS.map((document) => [
       document.type,
