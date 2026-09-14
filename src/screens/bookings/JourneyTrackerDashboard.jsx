@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/api/client';
-import { Search, Filter, MessageSquare, Edit, UserPlus, Clock, Loader2, CheckCircle, AlertTriangle, FileText } from 'lucide-react';
+import { Search, Filter, MessageSquare, Edit, UserPlus, Clock, Loader2, CheckCircle, AlertTriangle, FileText, ClipboardCheck } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 const JourneyTrackerDashboard = () => {
@@ -13,6 +13,7 @@ const JourneyTrackerDashboard = () => {
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   const [isFollowUpModalOpen, setIsFollowUpModalOpen] = useState(false);
   const [isSurchargeModalOpen, setIsSurchargeModalOpen] = useState(false);
+  const [isDocumentsModalOpen, setIsDocumentsModalOpen] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState(null);
 
   // Form states
@@ -79,6 +80,17 @@ const JourneyTrackerDashboard = () => {
     onError: (err) => {
       toast.error(err.response?.data?.message || 'Failed to apply surcharge');
     }
+  });
+
+  const documentReviewMutation = useMutation({
+    mutationFn: ({ id, data }) => api.post(`/admin/bookings/${id}/document-review`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['admin-journey-tracker']);
+      toast.success('Document checklist updated');
+    },
+    onError: (err) => {
+      toast.error(err.response?.data?.message || 'Failed to update document checklist');
+    },
   });
 
   const resetForms = () => {
@@ -221,6 +233,16 @@ const JourneyTrackerDashboard = () => {
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex justify-end space-x-2">
+                        <button
+                          onClick={() => {
+                            setSelectedBooking(booking);
+                            setIsDocumentsModalOpen(true);
+                          }}
+                          className="p-2 text-cyan-600 hover:bg-cyan-500/10 rounded-lg transition-colors"
+                          title="Review travel documents"
+                        >
+                          <ClipboardCheck className="w-4 h-4" />
+                        </button>
                         <button 
                           onClick={() => {
                             setSelectedBooking(booking);
@@ -338,6 +360,15 @@ const JourneyTrackerDashboard = () => {
         </div>
       )}
 
+      {isDocumentsModalOpen && selectedBooking && (
+        <DocumentReviewModal
+          booking={selectedBooking}
+          isSaving={documentReviewMutation.isPending}
+          onClose={() => { setIsDocumentsModalOpen(false); setSelectedBooking(null); }}
+          onSave={(data) => documentReviewMutation.mutate({ id: selectedBooking.id, data })}
+        />
+      )}
+
       {/* Follow-up Modal */}
       {isFollowUpModalOpen && selectedBooking && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
@@ -439,5 +470,112 @@ const JourneyTrackerDashboard = () => {
     </DashboardLayout>
   );
 };
+
+const DOCUMENT_REQUIREMENTS = [
+  {
+    type: 'passport',
+    label: 'Valid Passport',
+    description: 'Must have at least 6 months validity from the travel date and 2 blank pages.',
+  },
+  {
+    type: 'vaccination',
+    label: 'Vaccination Certificate',
+    description: 'Meningitis ACWY is required, plus any current health requirements such as COVID-19 or Yellow Fever based on origin.',
+  },
+  {
+    type: 'passport_photo',
+    label: 'Passport Photos',
+    description: 'Recent passport-sized colour photos taken against a plain white background.',
+  },
+  {
+    type: 'relationship_proof',
+    label: 'Proof of Relationship',
+    description: 'Marriage certificate for spouses, or birth certificates for children travelling as a family.',
+  },
+  {
+    type: 'shahadah',
+    label: 'Shahadah Certificate',
+    description: 'Official letter from an Islamic centre when a convert passport does not have a Muslim name.',
+  },
+];
+
+function DocumentReviewModal({ booking, isSaving, onClose, onSave }) {
+  const review = booking.pilgrimDocuments?.find((document) => document.type === 'concierge_review') || {};
+  const [drafts, setDrafts] = useState(() =>
+    Object.fromEntries(DOCUMENT_REQUIREMENTS.map((document) => [
+      document.type,
+      {
+        status: review[document.type]?.status || 'missing',
+        notes: review[document.type]?.notes || '',
+      },
+    ]))
+  );
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      <div className="bg-card w-full max-w-2xl max-h-[90vh] rounded-2xl shadow-xl overflow-hidden flex flex-col">
+        <div className="p-6 border-b border-border flex justify-between items-center">
+          <div>
+            <h3 className="font-bold text-lg">Document Checklist</h3>
+            <p className="text-sm text-fg/60 mt-1">{booking.bookingRef} · {booking.pilgrimName}</p>
+          </div>
+          <button onClick={onClose} className="text-fg/40 hover:text-fg" aria-label="Close">✕</button>
+        </div>
+        <div className="p-6 space-y-4 overflow-y-auto">
+          {DOCUMENT_REQUIREMENTS.map((document) => {
+            const current = drafts[document.type];
+            return (
+              <div key={document.type} className="border border-border rounded-xl p-4 bg-bg/40">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-start gap-3">
+                    <FileText className="w-5 h-5 text-primary mt-0.5" />
+                    <div>
+                      <h4 className="font-semibold">{document.label}</h4>
+                      <p className="text-sm text-fg/60 mt-1">{document.description}</p>
+                    </div>
+                  </div>
+                  <select
+                    value={current.status || 'missing'}
+                    onChange={(event) => setDrafts((previous) => ({
+                      ...previous,
+                      [document.type]: { ...previous[document.type], status: event.target.value },
+                    }))}
+                    disabled={isSaving}
+                    className="px-3 py-2 bg-card border border-border rounded-lg text-sm shrink-0"
+                  >
+                    <option value="missing">Missing</option>
+                    <option value="received">Received</option>
+                    <option value="approved">Approved</option>
+                    <option value="rejected">Rejected</option>
+                  </select>
+                </div>
+                <input
+                  value={current.notes || ''}
+                  onChange={(event) => setDrafts((previous) => ({
+                    ...previous,
+                    [document.type]: { ...previous[document.type], notes: event.target.value },
+                  }))}
+                  placeholder="Add review note"
+                  className="mt-3 w-full px-3 py-2 bg-card border border-border rounded-lg text-sm"
+                />
+                <button
+                  type="button"
+                  onClick={() => onSave({ documentType: document.type, ...current })}
+                  disabled={isSaving}
+                  className="mt-3 text-sm font-semibold text-primary hover:underline disabled:opacity-50"
+                >
+                  Save review
+                </button>
+              </div>
+            );
+          })}
+        </div>
+        <div className="p-4 border-t border-border flex justify-end">
+          <button onClick={onClose} className="btn btn-primary">Done</button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default JourneyTrackerDashboard;
