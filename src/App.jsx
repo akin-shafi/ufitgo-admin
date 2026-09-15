@@ -5,6 +5,7 @@ import { AuthProvider } from '@/context/AuthContext';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { SessionTimeoutManager } from '@/components/common/SessionTimeoutManager';
 import LoginScreen from '@/screens/auth/LoginScreen';
+import AcceptInviteScreen from '@/screens/auth/AcceptInviteScreen';
 // import api from '@/api/client';
 import SmartDashboard from '@/screens/dashboards/SmartDashboard';
 
@@ -62,6 +63,7 @@ function App() {
         <BrowserRouter>
           <Routes>
             <Route path="/login" element={<LoginScreen />} />
+            <Route path="/accept-invite" element={<AcceptInviteScreen />} />
             <Route element={<ProtectedRoute />}>
               <Route path="/" element={<SmartDashboard />} />
               <Route path="/extensions" element={<ExtensionsLibrary />} />

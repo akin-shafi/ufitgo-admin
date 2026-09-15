@@ -19,12 +19,12 @@ const UserManagement = () => {
   // Fetch Admins
   const { data: admins, isLoading } = useQuery({
     queryKey: ['admins'],
-    queryFn: () => api.get('/admin/operator-auth/users').then(res => res.data)
+    queryFn: () => api.get('/admin/auth/admins').then(res => res.data)
   });
 
   // Delete Mutation
   const deleteMutation = useMutation({
-    mutationFn: (id) => api.delete(`/admin/operator-auth/users/${id}`),
+    mutationFn: (id) => api.delete(`/admin/auth/admins/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries(['admins']);
     }
@@ -32,7 +32,7 @@ const UserManagement = () => {
 
   // Toggle Active Status Mutation
   const toggleStatusMutation = useMutation({
-    mutationFn: (id) => api.patch(`/admin/operator-auth/users/${id}/toggle-status`),
+    mutationFn: (id) => api.post(`/admin/auth/admins/${id}/toggle-status`),
     onSuccess: () => {
       queryClient.invalidateQueries(['admins']);
     }
@@ -102,7 +102,7 @@ const UserManagement = () => {
                   {/* Role Badge */}
                   <td className="px-6 py-4">
                     <span className="px-2 py-1 bg-secondary text-white text-[10px] font-bold rounded-lg uppercase tracking-wider flex items-center w-fit">
-                      <Shield className="w-3 h-3 mr-1" /> Full Access
+                      <Shield className="w-3 h-3 mr-1" /> {admin.role?.replace(/_/g, ' ') || 'Unassigned'}
                     </span>
                   </td>
 
@@ -110,7 +110,7 @@ const UserManagement = () => {
                   <td className="px-6 py-4">
                     {admin.isActive === false ? (
                       <span className="px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700 flex items-center w-fit">
-                        <PowerOff className="w-3 h-3 mr-1" /> Deactivated
+                        <PowerOff className="w-3 h-3 mr-1" /> Pending invitation
                       </span>
                     ) : (
                       <span className="px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700 flex items-center w-fit">
@@ -174,7 +174,7 @@ const UserManagement = () => {
       )}
 
       {/* Modals */}
-      {showInviteModal && <InviteModal role="admin" onClose={() => setShowInviteModal(false)} />}
+      {showInviteModal && <InviteModal onClose={() => setShowInviteModal(false)} />}
       {editingAdmin && <EditAdminModal admin={editingAdmin} onClose={() => setEditingAdmin(null)} />}
       {passwordAdmin && <ChangePasswordModal admin={passwordAdmin} onClose={() => setPasswordAdmin(null)} />}
     </DashboardLayout>
@@ -198,7 +198,7 @@ const EditAdminModal = ({ admin, onClose }) => {
     setLoading(true);
     setError('');
     try {
-      await api.put(`/admin/operator-auth/users/${admin.id}`, formData);
+      await api.post(`/admin/auth/admins/${admin.id}`, formData);
       queryClient.invalidateQueries(['admins']);
       onClose();
     } catch (err) {
@@ -401,8 +401,10 @@ const ChangePasswordModal = ({ admin, onClose }) => {
 // ─────────────────────────────────────────────────────
 // Invite Admin Modal (existing)
 // ─────────────────────────────────────────────────────
-const InviteModal = ({ role, onClose }) => {
-  const [formData, setFormData] = useState({ firstName: '', lastName: '', email: '', role });
+const ADMIN_ROLES = ['SUPER_ADMIN', 'MANAGING_DIRECTOR', 'FINANCE', 'OPERATIONS', 'COMPLIANCE', 'TECHNICAL', 'SUPPORT'];
+
+const InviteModal = ({ onClose }) => {
+  const [formData, setFormData] = useState({ name: '', email: '', role: 'OPERATIONS', permissions: ['journeys.manage'] });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const queryClient = useQueryClient();
@@ -412,8 +414,8 @@ const InviteModal = ({ role, onClose }) => {
     setLoading(true);
     setError('');
     try {
-      await api.post('/admin/operator-auth/invite', formData);
-      queryClient.invalidateQueries([role === 'admin' ? 'admins' : 'operators']);
+      await api.post('/admin/auth/invite', formData);
+      queryClient.invalidateQueries(['admins']);
       onClose();
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to send invitation');
@@ -430,7 +432,7 @@ const InviteModal = ({ role, onClose }) => {
             <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
               <UserPlus className="w-5 h-5" />
             </div>
-            <h2 className="text-xl font-bold">Invite New {role === 'admin' ? 'Administrator' : 'Operator'}</h2>
+            <h2 className="text-xl font-bold">Invite Platform Administrator</h2>
           </div>
           <button onClick={onClose} className="p-2 hover:bg-bg rounded-full transition-colors">
             <X className="w-5 h-5 text-fg/40" />
@@ -444,25 +446,9 @@ const InviteModal = ({ role, onClose }) => {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-bold text-fg/60 mb-1">First Name</label>
-              <input
-                required
-                className="input"
-                placeholder="Musa"
-                onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-fg/60 mb-1">Last Name</label>
-              <input
-                required
-                className="input"
-                placeholder="Ibrahim"
-                onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-              />
-            </div>
+          <div>
+            <label className="block text-xs font-bold text-fg/60 mb-1">Full Name</label>
+            <input required className="input" placeholder="Musa Ibrahim" onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
           </div>
 
           <div>
@@ -476,17 +462,13 @@ const InviteModal = ({ role, onClose }) => {
             />
           </div>
 
-          {role === 'operator' && (
-            <div>
-              <label className="block text-xs font-bold text-fg/60 mb-1">Company Name</label>
-              <input
-                required
-                className="input"
-                placeholder="Musa Hajj Travels Ltd"
-                onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
-              />
-            </div>
-          )}
+          <div>
+            <label className="block text-xs font-bold text-fg/60 mb-1">Role</label>
+            <select className="input" value={formData.role} onChange={(e) => setFormData({ ...formData, role: e.target.value })}>
+              {ADMIN_ROLES.map((adminRole) => <option key={adminRole} value={adminRole}>{adminRole.replace(/_/g, ' ')}</option>)}
+            </select>
+            <p className="text-xs text-fg/50 mt-1">The invitee will create their password from the secure email link. They remain pending until activation.</p>
+          </div>
 
           <div className="pt-4 flex space-x-3">
             <button type="button" onClick={onClose} className="flex-1 btn-outline">Cancel</button>
