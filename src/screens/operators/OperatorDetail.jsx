@@ -6,7 +6,8 @@ import api from '@/api/client';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import {
   ArrowLeft, Loader2, Mail, Phone, User, Building, Package, ExternalLink,
-  ShieldCheck, ShieldAlert, CheckCircle, Plus, ChevronDown, Calendar, Info
+  ShieldCheck, ShieldAlert, CheckCircle, Plus, ChevronDown, Calendar, Info,
+  Key, X, Eye, EyeOff, AlertTriangle
 } from 'lucide-react';
 
 // ─── Status Config ─────────────────────────────────────────────
@@ -33,6 +34,7 @@ const OperatorDetail = () => {
   const [activeTab, setActiveTab] = useState('packages');
   const [showActions, setShowActions] = useState(false);
   const [confirmKycStatus, setConfirmKycStatus] = useState(null);
+  const [showPasswordReset, setShowPasswordReset] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: operator, isLoading } = useQuery({
@@ -179,6 +181,15 @@ const OperatorDetail = () => {
                   className="w-full text-left px-4 py-2.5 text-sm text-fg hover:bg-gray-50 transition-colors"
                 >
                   Change Tier
+                </button>
+                <button
+                  onClick={() => {
+                    setShowPasswordReset(true);
+                    setShowActions(false);
+                  }}
+                  className="w-full text-left px-4 py-2.5 text-sm text-fg hover:bg-gray-50 transition-colors"
+                >
+                  Reset Password
                 </button>
                 <button 
                   onClick={() => {
@@ -517,7 +528,143 @@ const OperatorDetail = () => {
         </div>
       )}
 
+      {showPasswordReset && (
+        <ResetOperatorPasswordModal operator={operator} onClose={() => setShowPasswordReset(false)} />
+      )}
+
     </DashboardLayout>
+  );
+};
+
+// ─────────────────────────────────────────────────────
+// Reset Operator Password Modal
+// ─────────────────────────────────────────────────────
+const ResetOperatorPasswordModal = ({ operator, onClose }) => {
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+
+    if (newPassword.length < 8) {
+      setError('Password must be at least 8 characters long');
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await api.put(`/admin/operator-auth/users/${operator.id}/password`, { newPassword });
+      setSuccess(true);
+      setTimeout(() => onClose(), 1500);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to reset password');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-secondary/80 backdrop-blur-sm p-4">
+      <div className="w-full max-w-lg card animate-in fade-in zoom-in duration-200">
+        <div className="flex justify-between items-center mb-6">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-500">
+              <Key className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold">Reset Password</h2>
+              <p className="text-xs text-fg/40">Reset password for {operator.companyName}</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="p-2 hover:bg-bg rounded-full transition-colors">
+            <X className="w-5 h-5 text-fg/40" />
+          </button>
+        </div>
+
+        {success ? (
+          <div className="py-8 text-center">
+            <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
+              <CheckCircle className="w-8 h-8 text-green-600" />
+            </div>
+            <h3 className="text-lg font-bold text-green-700">Password Reset!</h3>
+            <p className="text-sm text-fg/60 mt-1">The operator's new password is now active.</p>
+          </div>
+        ) : (
+          <>
+            {error && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm flex items-center">
+                <AlertTriangle className="w-4 h-4 mr-2 flex-shrink-0" /> {error}
+              </div>
+            )}
+
+            <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-700 text-sm flex items-start">
+              <AlertTriangle className="w-4 h-4 mr-2 mt-0.5 flex-shrink-0" />
+              <span>You are resetting the password for <strong>{operator.email}</strong>. They will need to use this new password on their next login.</span>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="relative">
+                <label className="block text-xs font-bold text-fg/60 mb-1">New Password</label>
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  required
+                  className="input pr-10"
+                  placeholder="Minimum 8 characters"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-[30px] text-fg/40 hover:text-fg transition-colors"
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-fg/60 mb-1">Confirm Password</label>
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  required
+                  className="input"
+                  placeholder="Re-enter new password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                />
+                {confirmPassword && newPassword !== confirmPassword && (
+                  <p className="text-red-500 text-xs mt-1">Passwords do not match</p>
+                )}
+                {confirmPassword && newPassword === confirmPassword && (
+                  <p className="text-green-500 text-xs mt-1 flex items-center"><CheckCircle className="w-3 h-3 mr-1" /> Passwords match</p>
+                )}
+              </div>
+
+              <div className="pt-4 flex space-x-3">
+                <button type="button" onClick={onClose} className="flex-1 btn-outline">Cancel</button>
+                <button
+                  type="submit"
+                  disabled={loading || newPassword !== confirmPassword}
+                  className="flex-1 btn-primary flex items-center justify-center disabled:opacity-50"
+                >
+                  {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Reset Password'}
+                </button>
+              </div>
+            </form>
+          </>
+        )}
+      </div>
+    </div>
   );
 };
 

@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import api from '@/api/client';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { UserPlus, Loader2, Search, Eye, Edit2, MoreVertical, ChevronLeft, ChevronRight } from 'lucide-react';
-import { InviteModal } from '@/screens/users/UserManagement';
 
 const STATUS_CONFIG = {
   approved: { label: 'Approved', dot: 'bg-emerald-500', bg: 'bg-emerald-50', text: 'text-emerald-700' },
@@ -199,7 +198,6 @@ const EditOperatorModal = ({ operator, onClose, onSuccess }) => {
 };
 
 const OperatorManagement = () => {
-  const [showInviteModal, setShowInviteModal] = useState(false);
   const [selectedOperator, setSelectedOperator] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [search, setSearch] = useState('');
@@ -287,11 +285,11 @@ const OperatorManagement = () => {
           <option value="rejected">Rejected</option>
         </select>
         <button 
-          onClick={() => setShowInviteModal(true)}
+          onClick={() => navigate('/operators/onboard')}
           className="btn-primary flex items-center text-sm whitespace-nowrap"
         >
           <UserPlus className="w-4 h-4 mr-2" />
-          Onboard Operator
+          Onboard Partner
         </button>
       </div>
 
@@ -399,8 +397,6 @@ const OperatorManagement = () => {
         </div>
       )}
 
-      {showInviteModal && <InviteModal role="operator" onClose={() => setShowInviteModal(false)} />}
-      
       {isEditing && (
         <EditOperatorModal 
           operator={selectedOperator} 

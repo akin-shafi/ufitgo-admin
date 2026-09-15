@@ -14,6 +14,7 @@ import ExtensionsLibrary from '@/screens/extensions/ExtensionsLibrary';
 import UserManagement from '@/screens/users/UserManagement';
 import OperatorManagement from '@/screens/operators/OperatorManagement';
 import OperatorDetail from '@/screens/operators/OperatorDetail';
+import OnboardOperatorPage from '@/screens/operators/OnboardOperatorPage';
 import CreatePackagePage from '@/screens/operators/CreatePackagePage';
 import SettingsScreen from '@/screens/settings/SettingsScreen';
 import PaymentPlatformScreen from '@/screens/payments/PaymentPlatformScreen';
@@ -71,6 +72,7 @@ function App() {
               <Route path="/customers" element={<CustomerManagement />} />
               <Route path="/customers/:id" element={<CustomerDetail />} />
               <Route path="/operators" element={<OperatorManagement />} />
+              <Route path="/operators/onboard" element={<OnboardOperatorPage />} />
               <Route path="/operators/:id/create-package" element={<CreatePackagePage />} />
               <Route path="/operators/:id" element={<OperatorDetail />} />
               <Route path="/packages" element={<PackageManagement />} />
