@@ -118,6 +118,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
+    api.post('/admin/auth/logout').catch(() => {});
     finishLogout();
   };
 
