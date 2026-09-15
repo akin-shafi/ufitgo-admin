@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/context/AuthContext';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/api/client';
@@ -8,6 +9,7 @@ import { toast } from 'react-hot-toast';
 
 const JourneyTrackerDashboard = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [stageFilter, setStageFilter] = useState('ALL');
   const queryClient = useQueryClient();
@@ -29,6 +31,9 @@ const JourneyTrackerDashboard = () => {
 
   const [surchargeAmount, setSurchargeAmount] = useState('');
   const [surchargeReason, setSurchargeReason] = useState('');
+  const [isStageMenuOpen, setIsStageMenuOpen] = useState(false);
+
+  const isSuperAdmin = user?.role === 'SUPER_ADMIN' || user?.permissions?.includes('*');
 
   const { data: bookings, isLoading } = useQuery({
     queryKey: ['admin-journey-tracker'],
@@ -329,18 +334,14 @@ const JourneyTrackerDashboard = () => {
             <div className="p-6 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-fg/70 mb-1">Journey Stage</label>
-                <select
+                <StageMenu
                   value={updateStage}
-                  onChange={(e) => setUpdateStage(e.target.value)}
-                  className="w-full px-4 py-2 bg-bg border border-border rounded-xl text-sm focus:border-primary outline-none"
-                >
-                  <option value="BOOKING_SECURED">Booking Secured</option>
-                  <option value="DOCUMENTS_PENDING">Documents Pending</option>
-                  <option value="DOCUMENTS_SUBMITTED">Documents Submitted</option>
-                  <option value="CONCIERGE_REVIEW">Concierge Review</option>
-                  <option value="PAYMENT_PENDING">Payment Pending</option>
-                  <option value="COMPLETED">Completed</option>
-                </select>
+                  onChange={setUpdateStage}
+                  isSuperAdmin={isSuperAdmin}
+                  isOpen={isStageMenuOpen}
+                  onToggle={() => setIsStageMenuOpen((open) => !open)}
+                  onClose={() => setIsStageMenuOpen(false)}
+                />
               </div>
               <div>
                 <label className="block text-sm font-medium text-fg/70 mb-1">Assign Concierge</label>
@@ -522,6 +523,67 @@ const DOCUMENT_REQUIREMENTS = [
     supportsNotApplicable: true,
   },
 ];
+
+const STAGE_OPTIONS = [
+  ['BOOKING_SECURED', 'Booking Secured'],
+  ['DOCUMENTS_PENDING', 'Documents Pending'],
+  ['DOCUMENTS_SUBMITTED', 'Documents Submitted'],
+  ['CONCIERGE_REVIEW', 'Concierge Review'],
+  ['PAYMENT_PENDING', 'Payment Pending'],
+  ['COMPLETED', 'Completed'],
+];
+
+function StageMenu({ value, onChange, isSuperAdmin, isOpen, onToggle, onClose }) {
+  const currentIndex = Math.max(0, STAGE_OPTIONS.findIndex(([stage]) => stage === value));
+  const selectedLabel = STAGE_OPTIONS.find(([stage]) => stage === value)?.[1] || 'Select stage';
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={onToggle}
+        className="w-full px-4 py-2.5 bg-bg border border-border rounded-xl text-sm text-left flex items-center justify-between focus:border-primary outline-none"
+        aria-haspopup="listbox"
+        aria-expanded={isOpen}
+      >
+        <span>{selectedLabel}</span>
+        <span className="text-fg/50">{isOpen ? '▴' : '▾'}</span>
+      </button>
+      {isOpen && (
+        <>
+          <button type="button" className="fixed inset-0 z-10 cursor-default" onClick={onClose} aria-label="Close stage menu" />
+          <div className="absolute z-20 mt-2 w-full rounded-xl border border-border bg-card shadow-xl overflow-hidden" role="listbox">
+            {STAGE_OPTIONS.map(([stage, label], index) => {
+              const passed = !isSuperAdmin && index < currentIndex;
+              const selected = stage === value;
+              return (
+                <button
+                  key={stage}
+                  type="button"
+                  disabled={passed}
+                  onClick={() => { onChange(stage); onClose(); }}
+                  className={`w-full px-4 py-3 flex items-center gap-3 text-left text-sm transition-colors ${
+                    passed ? 'text-fg/30 bg-bg/30 cursor-not-allowed' : 'text-fg hover:bg-primary/10'
+                  } ${selected ? 'font-semibold' : ''}`}
+                  role="option"
+                  aria-selected={selected}
+                >
+                  <span className={`w-5 h-5 rounded-full border flex items-center justify-center text-xs ${
+                    passed || selected ? 'border-primary bg-primary text-white' : 'border-border text-transparent'
+                  }`}>
+                    ✓
+                  </span>
+                  <span>{label}</span>
+                  {passed && <span className="ml-auto text-xs">Passed</span>}
+                </button>
+              );
+            })}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
 
 function DocumentReviewModal({ booking, isSaving, onClose, onSave }) {
   const review = booking.conciergeDocumentReview || {};
