@@ -1,142 +1,189 @@
 {
+  "title": "Infrastructure & Operations Runbook",
+  "subtitle": "Current production topology, deployment ownership, routing contracts, monitoring, and incident recovery.",
+  "lastUpdated": "16 September 2026",
   "categories": [
     {
-      "id": "stack",
-      "title": "Core Technology Stack",
+      "id": "overview",
+      "title": "Production Architecture",
       "icon": "Layers",
       "topics": [
         {
-          "title": "Developing Frontend Applications",
-          "content": "UfitGo consists of three main frontends: a React Native Expo mobile app, a Next.js user website, and a Vite-powered React admin console. These clients share business concepts but evolve independently.",
-          "resolution": "Action: When building a new user-facing flow, always check if the concept needs to be implemented across mobile, web, and admin. Do not assume one frontend is the only source of truth."
+          "title": "Current Production Topology",
+          "content": "Public clients call https://api.ufitgo.ng. Go54 DNS maps that hostname to the independently managed AWS Application Load Balancer at ufitgo-LoadB-f87hlRejZ4Sc-733851827.eu-west-1.elb.amazonaws.com. The ALB terminates TLS and routes requests by URL path to service-specific target groups. ECS owns target registration for every standard Fargate service.\n\nProduction no longer depends on manual task-IP registration or ECS Express endpoints. The previous Express services have zero running tasks and are in AWS-managed deletion.",
+          "resolution": "Source of truth: CloudFormation stack ufitgo-standard-public-alb, backend/aws/cloudformation/standard-public-alb.yml, and the Go54 api CNAME. Never point api.ufitgo.ng at an individual task IP or an ECS-generated service hostname."
         },
         {
-          "title": "Building in the Primary Backends",
-          "content": "Our main transactional APIs are modular NestJS services written in TypeScript. The user API handles wallet, savings, and KYC. Separate NestJS services run the admin and operator experiences.",
-          "resolution": "Action: Place new business logic inside the service that actually owns the domain boundary. Do not duplicate domain logic across the admin, operator, or API gateway layers."
+          "title": "Service Inventory and Ownership",
+          "content": "Standard ECS services in cluster default:\n• betasafar-admin-api-standard — admin API, port 3002\n• ufitgo-advisor-api-standard — advisor API, port 3005\n• ufitgo-operator-api-standard — operator API, port 3001\n• ufitgo-payment-service-standard — payment API, port 8888\n• ufitgo-user-api-standard — user, wallet, savings, and KYC API, port 3000\n• ufitgo-notification-service-standard — email, push, templates, and broadcasts, port 8001\n\nEach service has desired count 1 and a dedicated IP target group. ECS automatically registers new task IPs and deregisters old ones during deployments.",
+          "resolution": "Check ECS service desired/running/pending counts and its target group before investigating application code. A healthy service requires running = desired, pending = 0, rollout COMPLETED, and at least one healthy ALB target."
         },
         {
-          "title": "Integrating with Go Services",
-          "content": "The `payment-service` and `notification-service` are written in Go. `payment-service` manages gateway debits and background worker modes. `notification-service` handles all outbound emails and messages.",
-          "resolution": "Action: If your new feature requires payment execution or sending emails/SMS, integrate with these existing Go services via API calls instead of building that workload directly into the NestJS user API."
+          "title": "Infrastructure Ownership",
+          "content": "The production ALB, listener rules, target groups, security-group ingress, and HealthyHostCount alarms are owned by CloudFormation. Each standard ECS service is also represented by a CloudFormation stack created from backend/aws/cloudformation/standard-fargate-service.yml.\n\nGo54 owns DNS. AWS Certificate Manager owns the TLS certificate. ECR stores service images. SSM Parameter Store supplies runtime secrets. CloudWatch stores logs, metrics, and alarms.",
+          "resolution": "Make persistent infrastructure changes through CloudFormation and commit the template first. Console or CLI hotfixes must be immediately reconciled into source so the next stack update does not reverse them."
         },
         {
-          "title": "Managing the Persistence Layer",
-          "content": "PostgreSQL is our system of record (users, savings, wallet balances). TypeORM is the standard data access layer in NestJS. Redis is used for caching and shared state.",
-          "resolution": "Action: Always implement schema changes using explicit TypeORM entities and migration scripts. Use DTO validation for all inputs. Avoid storing ad-hoc JSON blobs."
+          "title": "Data and Shared Dependencies",
+          "content": "PostgreSQL is the transactional system of record. NestJS services use TypeORM; Go services use their native database layer. Redis provides cache and shared ephemeral state. Services communicate through protected HTTP contracts and must not read another service's database directly.\n\nSensitive values belong in SSM Parameter Store or Secrets Manager. Task definitions reference secrets at runtime; local .env files are not production evidence.",
+          "resolution": "For production configuration questions, inspect the active ECS task definition and secret references. Never paste decrypted credentials into logs, tickets, dashboard documentation, or source control."
         }
       ]
     },
     {
-      "id": "integrations",
-      "title": "Third-Party Integrations",
-      "icon": "Plug",
-      "topics": [
-        {
-          "title": "Working with Banking-as-a-Service",
-          "content": "We provision virtual accounts via BaaS integrations (e.g. Wema/FCMB). The `baas_accounts` table links provider-specific accounts to our users, allowing deposits to be matched to wallets and constrained by KYC limits.",
-          "resolution": "Action: If you need to swap or add a BaaS provider, implement it behind the existing internal abstraction. This ensures wallet funding and compliance checks remain untouched."
-        },
-        {
-          "title": "Handling KYC Providers",
-          "content": "Identity verification (BVN, NIN, liveness) is handled dynamically by our KYC subsystem. We are currently in a hybrid state where legacy user KYC fields coexist with the newer profile models.",
-          "resolution": "Action: When updating KYC flows, ensure you update both the legacy KYC records and the new KYC profile models until the migration is officially completed."
-        },
-        {
-          "title": "Configuring Payment Gateways & Webhooks",
-          "content": "External gateways (Paystack, Monnify) handle card funding and debits. Webhooks are critical for finalizing wallet/savings states after a gateway event.",
-          "resolution": "Action: Always ensure gateway webhooks are signature-validated and idempotent. If you alter payment success logic, test both the direct API return path and the asynchronous webhook path."
-        },
-        {
-          "title": "Triggering Notifications",
-          "content": "The user API dictates *when* a notification should fire, but the Go `notification-service` handles the actual template delivery.",
-          "resolution": "Action: To debug missing emails, first check the user API logs to see if the trigger fired. If it did, check the `notification-service` logs for delivery failures."
-        }
-      ]
-    },
-    {
-      "id": "cron",
-      "title": "Background Jobs & Scheduled Work",
-      "icon": "Clock",
-      "topics": [
-        {
-          "title": "Managing the Auto-Debit Worker",
-          "content": "Recurring auto-debits run via the `payment-service` Docker image in a dedicated worker mode (set via `APP_MODE`), triggered by EventBridge.",
-          "resolution": "Action: Do not add scheduled financial tasks to the NestJS API. Any critical scheduled financial work must run as an explicit worker task."
-        },
-        {
-          "title": "Creating Safe In-App Cron Jobs",
-          "content": "Jobs like KYC monitoring and savings auditing run inside the user API. Because the API scales horizontally, these jobs use PostgreSQL advisory locks (via `CronLockService`) to prevent duplicate executions.",
-          "resolution": "Action: If you add a new cron job to the user API, you MUST wrap it in a distributed lock before executing its logic, or it will run multiple times in production."
-        },
-        {
-          "title": "Triggering Savings Reminders",
-          "content": "Savings reminders are triggered by an external scheduler calling a protected endpoint in the user API, guarded by `x-system-key`.",
-          "resolution": "Action: To manually test or wire up new schedulers for reminders, call this protected system task endpoint rather than bypassing the API boundary."
-        },
-        {
-          "title": "Monitoring Job Observability",
-          "content": "All background jobs must emit structured logs including duration and processed record counts to help operators detect silent failures.",
-          "resolution": "Action: Before deploying a new scheduled job, ensure it logs its execution time and the number of items it processed. A job is not production-ready without these metrics."
-        }
-      ]
-    },
-    {
-      "id": "patterns",
-      "title": "Architectural Patterns",
-      "icon": "Code",
-      "topics": [
-        {
-          "title": "Enforcing Modular Domain Ownership",
-          "content": "Our codebase uses strict domain boundaries (Wallet, Savings, KYC, Notifications). Each module owns its own controllers and persistence logic.",
-          "resolution": "Action: Fix bugs and add business rules in the service/module that actually owns the data. Do not patch logic in gateways or downstream consumers."
-        },
-        {
-          "title": "Using Environment-Driven Modes",
-          "content": "We use runtime flags (like `APP_MODE` in `payment-service`) to switch behaviors between HTTP API and background worker within the same codebase.",
-          "resolution": "Action: Only use explicit environment-driven modes if both modes share the same code ownership. Otherwise, split them into cleanly separated codebases."
-        },
-        {
-          "title": "Defining Internal API Contracts",
-          "content": "Services communicate via internal HTTP APIs protected by shared secrets (e.g., `x-internal-api-key`).",
-          "resolution": "Action: When Service A needs data from Service B, create a protected endpoint in Service B. NEVER connect Service A directly to Service B's database."
-        },
-        {
-          "title": "Implementing Progressive Compliance",
-          "content": "We use Progressive KYC: users start with minimal friction (Tier 1) and are prompted for deeper compliance (Tier 2/3) only when their balance or risk profile grows.",
-          "resolution": "Action: When building new high-risk financial features, tie them into the progressive KYC state rather than building standalone compliance checks."
-        }
-      ]
-    },
-    {
-      "id": "infra",
-      "title": "Infrastructure, Routing & Operations",
+      "id": "routing",
+      "title": "DNS, ALB & Route Ownership",
       "icon": "Server",
       "topics": [
         {
-          "title": "Routing via Application Load Balancer (ALB)",
-          "content": "Traffic to `api.ufitgo.ng` hits an AWS ALB, which routes requests to backend services based on path rules. The ALB path map is the single source of truth.",
-          "resolution": "Action: If an endpoint returns 503, do not assume the app is down. First check the ALB listener rules and target-group health in AWS."
+          "title": "Public Route Map",
+          "content": "The HTTPS listener routes these path families:\n• /api/admin/* → Admin API\n• /api/advisor/* → Advisor API\n• /api/operator/* → Operator API\n• /api/v1/* and /api/payment/* → Payment Service\n• /api/* fallback → User API\n\nRule priority matters. Specific routes must remain above the broad /api/* user fallback.",
+          "resolution": "When adding an endpoint, first identify its owning service and verify the listener rule. Never solve a route conflict by broadening an existing wildcard without checking every higher- and lower-priority rule."
         },
         {
-          "title": "Understanding Public Route Families",
-          "content": "Public API routing is strictly defined: `/api/health` for User API, `/api/v1/*` for Payment Service, etc.",
-          "resolution": "Action: When debugging frontend connection issues, verify the exact route being called matches our ALB rules. A healthy service behind a misconfigured route appears as an outage."
+          "title": "Internal Route Map",
+          "content": "Internal HTTP traffic also enters the standard ALB:\n• /api/internal/notify/* → Notification Service\n• /api/internal/broadcast* → Notification Service\n• /api/internal/devices/* → Notification Service\n• /api/internal/templates* → Notification Service\n• /api/internal/logs* → Notification Service\n• /api/internal/operators* → Operator API\n• /api/internal/commissions* → Operator API\n• /api/internal/payouts*, settings*, promos* → Operator API\n• /api/operator/reports/internal/* → Operator API\n• remaining /api/internal/* → User API\n\nInternal routes use service authentication such as x-internal-api-key where implemented.",
+          "resolution": "A 401 on a protected internal route without a key proves routing reached the owning service. A 404 usually indicates the wrong controller prefix. A 503 indicates no healthy target or a missing rule."
         },
         {
-          "title": "Deploying ECS Express Services",
-          "content": "Core APIs are deployed as independent ECS Express services with individual task definitions and health checks.",
-          "resolution": "Action: Treat the ECS service health, the Target Group health, and the ALB routing rules as three separate points of failure during production debugging."
+          "title": "Health Endpoint Matrix",
+          "content": "Use these exact checks:\n• User: GET /api/health\n• Advisor: GET /api/advisor/health\n• Operator: GET /api/operator/auth/health\n• Payment: GET /api/v1/health\n• Admin: GET /api/admin/auth/health\n• Notification: GET /api/internal/templates for routed read validation; target-group health uses /health\n\nExpected public response for the first five checks is HTTP 200.",
+          "resolution": "Run the exact service health URL through api.ufitgo.ng. Then compare it with target health. Do not use deprecated assumptions such as /api/users/health or /api/payments for payment-service health."
         },
         {
-          "title": "Managing Secrets and Configuration",
-          "content": "We use AWS SSM Parameter Store and Secrets Manager for sensitive config. Local `.env` files are for development only.",
-          "resolution": "Action: When investigating production behavior, never rely on your local `.env`. Verify the actual runtime config injected into the ECS task."
+          "title": "Go54 DNS and TLS",
+          "content": "The Go54 record is a CNAME named api with TTL 30. Its value must be ufitgo-LoadB-f87hlRejZ4Sc-733851827.eu-west-1.elb.amazonaws.com. The ALB HTTPS listener uses the ACM certificate for the UfitGo API hostname.\n\nDNS, TLS, ALB routing, and ECS target health are separate layers. A correct DNS record does not prove the application target is healthy.",
+          "resolution": "Validate DNS using the system resolver plus public resolvers such as 1.1.1.1 and 8.8.8.8. Validate TLS and routing with curl against https://api.ufitgo.ng. Do not change DNS during an application-only incident."
+        }
+      ]
+    },
+    {
+      "id": "deployments",
+      "title": "Deployments & Rollback",
+      "icon": "Code",
+      "topics": [
+        {
+          "title": "Standard Deployment Flow",
+          "content": "Service repositories call reusable workflows from betasafar/ufitgo-pipeline-tower. A normal deployment performs: pre-flight build, ECR authentication, immutable image build and push, current task-definition read, new task-definition registration with the new image, ECS service update, stability wait, and task-definition equality verification.\n\nMigrated services set STANDARD_ECS_SERVICE_NAME. This causes the workflow to deploy directly to standard ECS and skip all Express update and manual ALB synchronization steps.",
+          "resolution": "A successful release must show the Deploy standard ECS service step completed. Confirm the ECS service task definition uses the expected image tag and the ALB target is healthy. A green image build alone is not a successful deployment."
         },
         {
-          "title": "Creating Operational Runbooks",
-          "content": "Background jobs and new infrastructure require explicit operational ownership, including CloudWatch alarms and runbooks.",
-          "resolution": "Action: When shipping a new scheduler or worker, you must include setup scripts, CloudWatch alarm definitions, and rollback instructions in the PR."
+          "title": "Rolling Deployment Behavior",
+          "content": "Standard services use ECS rolling deployments with deployment circuit breaker and rollback enabled. Minimum healthy percent is 100 and maximum percent is 200. Target deregistration delay is 30 seconds. ECS starts the new task, waits for ALB health, then drains the old task.\n\nThe workflow verifies that the final service task definition equals the newly registered revision. This prevents an ECS rollback from being mistaken for success.",
+          "resolution": "If a rollout stalls, inspect ECS deployment events for image pull, SSM access, vCPU quota, container startup, or ALB health errors. Keep the old healthy task serving while repairing the new revision."
+        },
+        {
+          "title": "Rollback Procedure",
+          "content": "Rollback does not require a DNS change. The standard ALB remains the production entry point. Select the last known-good task-definition revision and update the affected ECS service to that revision. Wait for services-stable, confirm the old revision is PRIMARY and COMPLETED, and verify its target is healthy.\n\nDo not roll back by manually registering task IPs. Native ECS target ownership is the reason the recurring outage was eliminated.",
+          "resolution": "Record the failed revision, CloudWatch log error, rollback revision, and validation URLs in the incident. If ECS circuit breaker already rolled back, verify the service taskDefinition value rather than assuming the waiter deployed the requested revision."
+        },
+        {
+          "title": "Deployment IAM",
+          "content": "GitHub deployment identities require ECR push, ECS describe/register/update, and iam:PassRole for the shared ECS task execution role. The scoped setup is maintained in backend/aws/setup-standard-deploy-permissions.sh.\n\nThe payment Go deployer and the Node OIDC role use different IAM identities. Permission success for one does not prove the other is configured.",
+          "resolution": "For AccessDenied, copy the exact action and resource from the workflow log. Add only the required action on the narrowest resource, use Resource * only for AWS describe actions that do not support resource-level permissions, and verify with IAM simulation."
+        }
+      ]
+    },
+    {
+      "id": "incidents",
+      "title": "Incident Response",
+      "icon": "Server",
+      "topics": [
+        {
+          "title": "First Five Minutes of an API Incident",
+          "content": "1. Capture the exact URL, method, timestamp, frontend origin, and HTTP status.\n2. Run the owning service health URL through api.ufitgo.ng.\n3. Check the service's standard HealthyHostCount alarm.\n4. Inspect ECS desired, running, pending, task definition, rollout state, and recent events.\n5. Inspect target health reason and description.\n6. Check CloudWatch application logs only after routing and target ownership are confirmed.\n\nThis order separates edge, routing, compute, and application failures quickly.",
+          "resolution": "Do not start by changing CORS or frontend code when the response server is awselb/2.0 with HTTP 503/504. That response never reached the application."
+        },
+        {
+          "title": "CORS Error Triage",
+          "content": "Browsers report missing Access-Control-Allow-Origin whenever a preflight fails, including ALB-generated 503/504 responses. A browser CORS message is therefore a symptom, not a diagnosis.\n\nSend an OPTIONS request with Origin, Access-Control-Request-Method, and Access-Control-Request-Headers. If the response includes x-powered-by and expected CORS headers, the request reached NestJS. If server is awselb/2.0 without those headers, investigate ALB and ECS.",
+          "resolution": "For admin login, validate OPTIONS /api/admin/auth/login from Origin https://admin.ufitgo.ng. Expected result is HTTP 204 with Access-Control-Allow-Origin set to that exact origin."
+        },
+        {
+          "title": "HTTP Status Interpretation",
+          "content": "• 200/204: route and application succeeded\n• 400/401/403: request reached the application; inspect payload or authorization\n• 404: wrong path, wrong route owner, or missing controller\n• 502: target returned an invalid upstream response\n• 503 from awselb/2.0: no usable target\n• 504 from awselb/2.0: target connection or response timed out\n\nAlways inspect response headers to distinguish ALB responses from application responses.",
+          "resolution": "Escalate based on the layer that generated the response. Include target health reason, ECS event, and application log excerpt instead of reporting only the browser message."
+        },
+        {
+          "title": "Target Health Recovery",
+          "content": "Standard ECS owns all current target registration. A replacement task receives an awsvpc IP, ECS registers it in the configured target group, ALB health checks it, and ECS drains the old target. Manual register-targets commands are not part of normal recovery anymore.\n\nIf a standard target group becomes empty, verify the ECS service LoadBalancers property, desired count, network configuration, task startup, and target-group health path.",
+          "resolution": "Never register a task manually as the first response. Repair the ECS service or task definition so the control plane self-heals. Manual registration is acceptable only as a documented emergency bridge with an immediate follow-up fix."
+        }
+      ]
+    },
+    {
+      "id": "monitoring",
+      "title": "Monitoring & Capacity",
+      "icon": "Clock",
+      "topics": [
+        {
+          "title": "Healthy Target Alarms",
+          "content": "CloudFormation manages six alarms named ufitgo-standard-{service}-zero-healthy-targets for admin, advisor, operator, payment, user, and notification. Each watches AWS/ApplicationELB HealthyHostCount using Minimum over 60 seconds and alarms when two consecutive datapoints are below 1.\n\nAlarm and OK notifications go through SNS topic ufitgo-production-alerts to the confirmed operational recipients.",
+          "resolution": "An ALARM means the service has no healthy target. Check ECS and target health immediately. INSUFFICIENT_DATA after creating a target group can be normal briefly; it is not normal for an established production target group."
+        },
+        {
+          "title": "CloudWatch Logs",
+          "content": "Each task definition sends container logs to CloudWatch using the awslogs driver. Use the service's active task definition to identify its log group and stream prefix. Deployment failures may occur before application logs exist, especially during image pull or SSM secret retrieval.",
+          "resolution": "Check ECS events before logs. For a running but unhealthy target, inspect application startup and health endpoint logs. For a task that never reaches RUNNING, inspect the ECS stopped reason and container reason."
+        },
+        {
+          "title": "Fargate Capacity",
+          "content": "The account's current Fargate On-Demand quota is 12 vCPUs. The six standard services normally consume 6 vCPUs, leaving capacity for rolling deployment tasks. AWS quota request ee5d5e6faf4f438ea24c75cebd89c7d1j1OtVNrE requests 24 vCPUs under case 178957897400614.\n\nA rolling deployment needs temporary capacity for both old and new tasks. Quota exhaustion appears in ECS events as an inability to place a task.",
+          "resolution": "Do not scale production services to zero to solve routine quota pressure. Confirm current running CPU, stop only verified obsolete workloads, and retain enough headroom for at least one replacement task per deployment."
+        },
+        {
+          "title": "Cost Ownership",
+          "content": "Primary runtime costs are Fargate tasks, the standard ALB and LCUs, RDS, Redis, network data transfer, CloudWatch logs, ECR storage, and external providers. The old Express services have zero tasks and are in AWS-managed deletion; their managed ALB disappears only after asynchronous teardown completes.",
+          "resolution": "Review active ECS services, running tasks, load balancers, databases, and log retention monthly. Never delete an AWS-managed resource manually while its owning Express service is still DRAINING."
+        }
+      ]
+    },
+    {
+      "id": "jobs",
+      "title": "Schedulers & Background Work",
+      "icon": "Clock",
+      "topics": [
+        {
+          "title": "Distributed Lock Requirement",
+          "content": "Scheduled jobs running inside horizontally scalable APIs must prevent duplicate execution. User API jobs and operator scheduled jobs use PostgreSQL advisory locks. The lock must be acquired and released on the same database connection.\n\nNotification scheduled broadcasts use an atomic database claim that changes status from pending to processing only when the row is still pending.",
+          "resolution": "Every new in-process cron must include a distributed lock or atomic claim before production. An in-memory flag is insufficient because each ECS task has its own process memory."
+        },
+        {
+          "title": "EventBridge Workers",
+          "content": "Financial schedules such as auto-debit run as explicit EventBridge-triggered ECS tasks using the payment-service image and an application mode. External schedules and in-app cron jobs are different operational systems with different logs and failure modes.",
+          "resolution": "For a missed worker execution, inspect EventBridge Scheduler invocation and target errors. For an in-app cron, inspect application logs and lock acquisition messages."
+        },
+        {
+          "title": "Safe Scheduler Changes",
+          "content": "A scheduled process must be idempotent, observable, and safe under retries. It should log start, completion, duration, processed count, skip reason, and failure context. Financial state changes require transaction and reference-level duplicate protection in addition to scheduler locking.",
+          "resolution": "Before deployment, test concurrent invocation, retry after partial failure, and lock contention. Never assume a one-task desired count guarantees single execution during rolling deployments."
+        }
+      ]
+    },
+    {
+      "id": "security",
+      "title": "Security & Change Control",
+      "icon": "Code",
+      "topics": [
+        {
+          "title": "Secrets and Runtime Configuration",
+          "content": "Production secrets are injected through ECS task-definition secret references to SSM Parameter Store or Secrets Manager. Plain environment variables are reserved for non-sensitive URLs, ports, modes, and identifiers. Tasks in the current public subnets use public IPs for outbound access while inbound access is restricted by security groups and ALB target routing.",
+          "resolution": "Never print decrypted parameters. Grant the task execution role only the secret and KMS permissions it needs. Rotate exposed credentials immediately and register a new task-definition revision."
+        },
+        {
+          "title": "Internal Authentication",
+          "content": "Internal routes are not trusted merely because their URL contains /internal. Services use shared internal API keys or system keys where guards are implemented. ALB routing determines destination; application guards determine authorization.",
+          "resolution": "New internal endpoints must validate a service credential and use least-privilege caller access. A 401 without a key is a successful routing test, not an outage."
+        },
+        {
+          "title": "Infrastructure Change Safety",
+          "content": "Production infrastructure changes require: current-state inspection, a narrow hypothesis, a reversible update, an executable validation, committed source-of-truth changes, and post-deployment checks. DNS and destructive service deletion require explicit cutover validation first.",
+          "resolution": "Before deleting or replacing infrastructure, verify DNS, every route family, alarms, task dependencies, CI ownership, and rollback method. Keep unrelated worktree changes out of infrastructure commits."
+        },
+        {
+          "title": "Authoritative Repository Artifacts",
+          "content": "Key infrastructure references:\n• backend/aws/cloudformation/standard-public-alb.yml\n• backend/aws/cloudformation/standard-fargate-service.yml\n• backend/aws/admin-standard-fargate-migration.md\n• backend/aws/alb-routing-map.md\n• backend/aws/setup-standard-deploy-permissions.sh\n• ufitgo-pipeline-tower/.github/workflows/*-public-ecs.yml and go-internal-ecs.yml",
+          "resolution": "Update the Admin Tech Architecture guide whenever these contracts change. Operational documentation is part of the deployment, not an optional follow-up."
         }
       ]
     }

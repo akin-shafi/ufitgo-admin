@@ -66,7 +66,7 @@ const TechArchitectureScreen = () => {
   const currentCategoryData = displayCategories.find(c => c.id === activeCategory) || displayCategories[0];
 
   return (
-    <DashboardLayout title="Tech Architecture Guide">
+    <DashboardLayout title={archData.title}>
       <div className="flex flex-col lg:flex-row gap-6 h-[calc(100vh-120px)]">
         
         {/* Left Sidebar: Tabs */}
@@ -126,7 +126,8 @@ const TechArchitectureScreen = () => {
                 })()}
                 <div>
                   <h2 className="text-xl font-bold text-fg">{currentCategoryData.title}</h2>
-                  <p className="text-sm text-fg/60 mt-1">Technical stack and architectural decisions.</p>
+                  <p className="text-sm text-fg/60 mt-1">{archData.subtitle}</p>
+                  <p className="text-xs text-fg/40 mt-1">Last updated {archData.lastUpdated}</p>
                 </div>
               </div>
               
@@ -156,14 +157,14 @@ const TechArchitectureScreen = () => {
                       
                       {isExpanded && (
                         <div className="p-5 border-t border-border/50 bg-card">
-                          <p className="text-sm text-fg/80 leading-relaxed mb-4">
+                          <p className="text-sm text-fg/80 leading-relaxed mb-4 whitespace-pre-line">
                             {topic.content}
                           </p>
                           <div className="bg-primary/10 border border-primary/20 rounded-lg p-4 flex gap-3">
                             <AlertCircle className="w-5 h-5 text-primary shrink-0 mt-0.5" />
                             <div>
-                              <div className="text-sm font-bold text-primary mb-1">Developer Guidelines</div>
-                              <p className="text-sm text-fg/80 leading-relaxed">
+                              <div className="text-sm font-bold text-primary mb-1">Required Action</div>
+                              <p className="text-sm text-fg/80 leading-relaxed whitespace-pre-line">
                                 {topic.resolution}
                               </p>
                             </div>
