@@ -205,12 +205,6 @@ const JourneyTrackerDashboard = () => {
                     <td className="px-6 py-4">
                       <div className="font-medium">{booking.pilgrimName}</div>
                       <div className="text-xs text-fg/60 mt-1">{booking.pilgrimPhone}</div>
-                      {booking.passportAssistanceRequested && (
-                        <span className="inline-flex items-center px-2 py-0.5 mt-1 rounded text-[10px] font-medium bg-red-100 text-red-700">
-                          <AlertTriangle className="w-3 h-3 mr-1" />
-                          Needs Passport
-                        </span>
-                      )}
                     </td>
                     <td className="px-6 py-4">
                       <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStageStyle(booking.currentJourneyStage)}`}>

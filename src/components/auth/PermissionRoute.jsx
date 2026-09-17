@@ -18,10 +18,10 @@ export const PermissionRoute = ({ requiredPermissions = [] }) => {
     return <Outlet />;
   }
 
-  // Check if user has ALL required permissions (or has the '*' wildcard)
+  // Check if user has ALL required permissions (or has the '*' wildcard, or is SUPER_ADMIN)
   const userPermissions = user?.permissions || [];
-  
-  const hasAccess = userPermissions.includes('*') || 
+
+  const hasAccess = user?.role === 'SUPER_ADMIN' || userPermissions.includes('*') ||
     requiredPermissions.every(permission => userPermissions.includes(permission));
 
   if (!hasAccess) {

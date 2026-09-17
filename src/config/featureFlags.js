@@ -1,7 +1,7 @@
 export const FEATURE_FLAGS = {
     ESCROW_DASHBOARD: false, // Hide Compliance & Escrow for now
     FX_SAVINGS_STATS: true,
-    AUDIT_LOGS: false,
+    AUDIT_LOGS: true,
 };
 
 export const isFeatureEnabled = (flag) => {

@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/api/client';
+import { useAuth } from '@/context/AuthContext';
+import { ADMIN_ROLES, PERMISSION_GROUPS, ROLE_DEFAULT_PERMISSIONS } from '@/config/adminPermissions';
 import {
   UserPlus, Trash2, Edit2, Shield, Mail, Loader2, X,
   Key, Power, PowerOff, Eye, EyeOff, AlertTriangle, CheckCircle
@@ -11,6 +13,8 @@ import {
 // Main UserManagement Component
 // ─────────────────────────────────────────────────────
 const UserManagement = () => {
+  const { user: currentAdmin } = useAuth();
+  const isSuperAdmin = currentAdmin?.role === 'SUPER_ADMIN';
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [editingAdmin, setEditingAdmin] = useState(null);
   const [passwordAdmin, setPasswordAdmin] = useState(null);
@@ -39,14 +43,14 @@ const UserManagement = () => {
   });
 
   const handleDelete = (admin) => {
-    if (window.confirm(`Are you sure you want to permanently delete "${admin.companyName}"? This action cannot be undone.`)) {
+    if (window.confirm(`Are you sure you want to permanently delete "${admin.name}"? This action cannot be undone.`)) {
       deleteMutation.mutate(admin.id);
     }
   };
 
   const handleToggleStatus = (admin) => {
     const action = admin.isActive !== false ? 'deactivate' : 'activate';
-    if (window.confirm(`${action === 'deactivate' ? 'Deactivate' : 'Activate'} "${admin.companyName}"?`)) {
+    if (window.confirm(`${action === 'deactivate' ? 'Deactivate' : 'Activate'} "${admin.name}"?`)) {
       toggleStatusMutation.mutate(admin.id);
     }
   };
@@ -88,10 +92,10 @@ const UserManagement = () => {
                   <td className="px-6 py-4">
                     <div className="flex items-center">
                       <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold mr-3 ${admin.isActive === false ? 'bg-red-500/10 text-red-400' : 'bg-primary/10 text-primary'}`}>
-                        {admin.companyName?.charAt(0) || '?'}
+                        {admin.name?.charAt(0) || '?'}
                       </div>
                       <div>
-                        <div className="font-bold text-sm">{admin.companyName}</div>
+                        <div className="font-bold text-sm">{admin.name}</div>
                         <div className="text-xs text-fg/40 flex items-center mt-1">
                           <Mail className="w-3 h-3 mr-1" /> {admin.email}
                         </div>
@@ -130,8 +134,9 @@ const UserManagement = () => {
                       {/* Edit */}
                       <button
                         onClick={() => setEditingAdmin(admin)}
-                        className="p-2 hover:bg-bg rounded-lg text-fg/40 hover:text-primary transition-colors"
-                        title="Edit Admin"
+                        disabled={admin.role === 'SUPER_ADMIN' && !isSuperAdmin}
+                        className="p-2 hover:bg-bg rounded-lg text-fg/40 hover:text-primary transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                        title={admin.role === 'SUPER_ADMIN' && !isSuperAdmin ? 'Only a super admin can edit a super admin' : 'Edit Admin'}
                       >
                         <Edit2 className="w-4 h-4" />
                       </button>
@@ -148,9 +153,9 @@ const UserManagement = () => {
                       {/* Toggle Active/Deactivate */}
                       <button
                         onClick={() => handleToggleStatus(admin)}
-                        disabled={toggleStatusMutation.isPending}
-                        className={`p-2 hover:bg-bg rounded-lg transition-colors ${admin.isActive === false ? 'text-green-500 hover:text-green-600' : 'text-fg/40 hover:text-orange-500'}`}
-                        title={admin.isActive === false ? 'Activate Account' : 'Deactivate Account'}
+                        disabled={toggleStatusMutation.isPending || (admin.role === 'SUPER_ADMIN' && !isSuperAdmin)}
+                        className={`p-2 hover:bg-bg rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${admin.isActive === false ? 'text-green-500 hover:text-green-600' : 'text-fg/40 hover:text-orange-500'}`}
+                        title={admin.role === 'SUPER_ADMIN' && !isSuperAdmin ? 'Only a super admin can deactivate a super admin' : admin.isActive === false ? 'Activate Account' : 'Deactivate Account'}
                       >
                         {admin.isActive === false ? <Power className="w-4 h-4" /> : <PowerOff className="w-4 h-4" />}
                       </button>
@@ -158,9 +163,9 @@ const UserManagement = () => {
                       {/* Delete */}
                       <button
                         onClick={() => handleDelete(admin)}
-                        disabled={deleteMutation.isPending}
-                        className="p-2 hover:bg-bg rounded-lg text-fg/40 hover:text-red-500 transition-colors"
-                        title="Delete Admin"
+                        disabled={deleteMutation.isPending || (admin.role === 'SUPER_ADMIN' && !isSuperAdmin)}
+                        className="p-2 hover:bg-bg rounded-lg text-fg/40 hover:text-red-500 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                        title={admin.role === 'SUPER_ADMIN' && !isSuperAdmin ? 'Only a super admin can delete a super admin' : 'Delete Admin'}
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -186,12 +191,23 @@ const UserManagement = () => {
 // ─────────────────────────────────────────────────────
 const EditAdminModal = ({ admin, onClose }) => {
   const [formData, setFormData] = useState({
-    companyName: admin.companyName || '',
+    name: admin.name || '',
     email: admin.email || '',
+    role: admin.role || 'OPERATIONS',
+    permissions: admin.permissions || [],
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const queryClient = useQueryClient();
+
+  const togglePermission = (permission) => {
+    setFormData((prev) => ({
+      ...prev,
+      permissions: prev.permissions.includes(permission)
+        ? prev.permissions.filter((p) => p !== permission)
+        : [...prev.permissions, permission],
+    }));
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -210,7 +226,7 @@ const EditAdminModal = ({ admin, onClose }) => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-secondary/80 backdrop-blur-sm p-4">
-      <div className="w-full max-w-lg card animate-in fade-in zoom-in duration-200">
+      <div className="w-full max-w-lg card animate-in fade-in zoom-in duration-200 max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-6">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
@@ -218,7 +234,7 @@ const EditAdminModal = ({ admin, onClose }) => {
             </div>
             <div>
               <h2 className="text-xl font-bold">Edit Administrator</h2>
-              <p className="text-xs text-fg/40">Update account details for {admin.companyName}</p>
+              <p className="text-xs text-fg/40">Update account details for {admin.name}</p>
             </div>
           </div>
           <button onClick={onClose} className="p-2 hover:bg-bg rounded-full transition-colors">
@@ -238,8 +254,8 @@ const EditAdminModal = ({ admin, onClose }) => {
             <input
               required
               className="input"
-              value={formData.companyName}
-              onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             />
           </div>
 
@@ -252,6 +268,49 @@ const EditAdminModal = ({ admin, onClose }) => {
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
             />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-fg/60 mb-1">Role</label>
+            <select className="input" value={formData.role} onChange={(e) => setFormData({ ...formData, role: e.target.value })}>
+              {ADMIN_ROLES.map((adminRole) => <option key={adminRole} value={adminRole}>{adminRole.replace(/_/g, ' ')}</option>)}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-fg/60 mb-2">Permissions</label>
+            {formData.permissions.includes('*') ? (
+              <p className="text-xs text-fg/50 bg-bg rounded-lg p-3 border border-border">
+                This admin has full access (<code>*</code>). Uncheck below to switch to a custom permission set.
+                <button type="button" className="block mt-2 text-primary font-semibold" onClick={() => setFormData({ ...formData, permissions: [] })}>
+                  Switch to custom permissions
+                </button>
+              </p>
+            ) : (
+              <div className="space-y-3 max-h-56 overflow-y-auto pr-1">
+                {PERMISSION_GROUPS.map((group) => (
+                  <div key={group.label}>
+                    <p className="text-[10px] uppercase tracking-wider text-fg/40 font-bold mb-1">{group.label}</p>
+                    <div className="flex flex-wrap gap-2">
+                      {group.permissions.map((permission) => (
+                        <label
+                          key={permission}
+                          className={`text-xs px-2 py-1 rounded-lg border cursor-pointer ${formData.permissions.includes(permission) ? 'bg-primary/10 border-primary text-primary' : 'border-border text-fg/60'}`}
+                        >
+                          <input
+                            type="checkbox"
+                            className="hidden"
+                            checked={formData.permissions.includes(permission)}
+                            onChange={() => togglePermission(permission)}
+                          />
+                          {permission}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="pt-4 flex space-x-3">
@@ -401,13 +460,24 @@ const ChangePasswordModal = ({ admin, onClose }) => {
 // ─────────────────────────────────────────────────────
 // Invite Admin Modal (existing)
 // ─────────────────────────────────────────────────────
-const ADMIN_ROLES = ['SUPER_ADMIN', 'MANAGING_DIRECTOR', 'FINANCE', 'OPERATIONS', 'COMPLIANCE', 'TECHNICAL', 'SUPPORT'];
-
 const InviteModal = ({ onClose }) => {
-  const [formData, setFormData] = useState({ name: '', email: '', role: 'OPERATIONS', permissions: ['journeys.manage'] });
+  const [formData, setFormData] = useState({ name: '', email: '', role: 'OPERATIONS', permissions: ROLE_DEFAULT_PERMISSIONS.OPERATIONS });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const queryClient = useQueryClient();
+
+  const handleRoleChange = (role) => {
+    setFormData((prev) => ({ ...prev, role, permissions: ROLE_DEFAULT_PERMISSIONS[role] || [] }));
+  };
+
+  const togglePermission = (permission) => {
+    setFormData((prev) => ({
+      ...prev,
+      permissions: prev.permissions.includes(permission)
+        ? prev.permissions.filter((p) => p !== permission)
+        : [...prev.permissions, permission],
+    }));
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -426,7 +496,7 @@ const InviteModal = ({ onClose }) => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-secondary/80 backdrop-blur-sm p-4">
-      <div className="w-full max-w-lg card animate-in fade-in zoom-in duration-200">
+      <div className="w-full max-w-lg card animate-in fade-in zoom-in duration-200 max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-6">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
@@ -464,10 +534,46 @@ const InviteModal = ({ onClose }) => {
 
           <div>
             <label className="block text-xs font-bold text-fg/60 mb-1">Role</label>
-            <select className="input" value={formData.role} onChange={(e) => setFormData({ ...formData, role: e.target.value })}>
+            <select className="input" value={formData.role} onChange={(e) => handleRoleChange(e.target.value)}>
               {ADMIN_ROLES.map((adminRole) => <option key={adminRole} value={adminRole}>{adminRole.replace(/_/g, ' ')}</option>)}
             </select>
             <p className="text-xs text-fg/50 mt-1">The invitee will create their password from the secure email link. They remain pending until activation.</p>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-fg/60 mb-2">Permissions</label>
+            {formData.permissions.includes('*') ? (
+              <p className="text-xs text-fg/50 bg-bg rounded-lg p-3 border border-border">
+                This role gets full access (<code>*</code>) by default.
+                <button type="button" className="block mt-2 text-primary font-semibold" onClick={() => setFormData({ ...formData, permissions: [] })}>
+                  Switch to custom permissions
+                </button>
+              </p>
+            ) : (
+              <div className="space-y-3 max-h-56 overflow-y-auto pr-1">
+                {PERMISSION_GROUPS.map((group) => (
+                  <div key={group.label}>
+                    <p className="text-[10px] uppercase tracking-wider text-fg/40 font-bold mb-1">{group.label}</p>
+                    <div className="flex flex-wrap gap-2">
+                      {group.permissions.map((permission) => (
+                        <label
+                          key={permission}
+                          className={`text-xs px-2 py-1 rounded-lg border cursor-pointer ${formData.permissions.includes(permission) ? 'bg-primary/10 border-primary text-primary' : 'border-border text-fg/60'}`}
+                        >
+                          <input
+                            type="checkbox"
+                            className="hidden"
+                            checked={formData.permissions.includes(permission)}
+                            onChange={() => togglePermission(permission)}
+                          />
+                          {permission}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="pt-4 flex space-x-3">

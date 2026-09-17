@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import toast from 'react-hot-toast';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useAuth } from '@/context/AuthContext';
 import api from '@/api/client';
@@ -26,20 +27,24 @@ const SettingsScreen = () => {
 
   // Mutation for updating features
   const updateConfigMutation = useMutation({
-    mutationFn: (features) => api.patch('/admin/customers/system/config', { features }),
-    onSuccess: () => {
-      queryClient.invalidateQueries(['system-config']);
-      setSuccess('Platform features updated successfully');
-      setTimeout(() => setSuccess(''), 3000);
+    mutationFn: (variables) => api.patch('/admin/customers/system/config', {
+      features: variables.features ?? variables,
+    }),
+    onSuccess: (_response, { successMessage }) => {
+      queryClient.invalidateQueries({ queryKey: ['system-config'] });
+      toast.success(successMessage || 'Platform configuration updated successfully');
     },
-    onError: () => {
-      setError('Failed to update platform features');
-      setTimeout(() => setError(''), 3000);
+    onError: (err) => {
+      toast.error(err.response?.data?.message || 'Failed to update platform configuration');
     }
   });
 
-  const handleToggleFeature = (featureKey, currentValue) => {
-    updateConfigMutation.mutate({ [featureKey]: !currentValue });
+  const handleToggleFeature = (featureKey, featureLabel, currentValue) => {
+    const nextValue = !currentValue;
+    updateConfigMutation.mutate({
+      features: { [featureKey]: nextValue },
+      successMessage: `${featureLabel} is now ${nextValue ? 'active' : 'inactive'}`,
+    });
   };
 
   const handlePasswordChange = async (e) => {
@@ -143,7 +148,7 @@ const SettingsScreen = () => {
                         <div className="text-xs text-fg/60 mt-1">{feature.desc}</div>
                       </div>
                       <button 
-                        onClick={() => handleToggleFeature(feature.key, isActive)}
+                        onClick={() => handleToggleFeature(feature.key, feature.label, isActive)}
                         disabled={updateConfigMutation.isPending}
                         className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${
                           isActive ? 'bg-primary' : 'bg-fg/20'

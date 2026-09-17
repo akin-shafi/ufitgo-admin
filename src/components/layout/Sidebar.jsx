@@ -32,8 +32,9 @@ import {
 import { useAuth } from '@/context/AuthContext';
 import { isFeatureEnabled } from '@/config/featureFlags';
 
-const checkAccess = (userPermissions = [], requiredPermissions = []) => {
+const checkAccess = (userPermissions = [], requiredPermissions = [], userRole = null) => {
   if (!requiredPermissions || requiredPermissions.length === 0) return true;
+  if (userRole === 'SUPER_ADMIN') return true;
   if (userPermissions.includes('*')) return true;
   // User must have at least ONE of the required permissions to see the menu item
   return requiredPermissions.some(p => userPermissions.includes(p));
@@ -82,6 +83,7 @@ const navigation = [
     children: [
       { name: 'KYC Verifications', href: '/verifications', icon: CheckCircle, permissions: ['kyc.manage'] },
       { name: 'Compliance Escrow', href: '/compliance', icon: ShieldCheck, permissions: ['compliance.manage'], visible: isFeatureEnabled('ESCROW_DASHBOARD') },
+      { name: 'Document Access Logs', href: '/audit-logs', icon: ShieldCheck, permissions: ['kyc.manage'], visible: isFeatureEnabled('AUDIT_LOGS') },
     ]
   },
   {
@@ -127,7 +129,7 @@ const NavItem = ({ item }) => {
   if (item.visible === false) return null;
   
   // Check if user has permission to see this main item
-  if (!checkAccess(user?.permissions, item.permissions)) return null;
+  if (!checkAccess(user?.permissions, item.permissions, user?.role)) return null;
 
   const handlePrefetch = (href) => {
     switch(href) {
@@ -152,7 +154,7 @@ const NavItem = ({ item }) => {
 
   if (item.children) {
     const visibleChildren = item.children.filter(child => 
-      child.visible !== false && checkAccess(user?.permissions, child.permissions)
+      child.visible !== false && checkAccess(user?.permissions, child.permissions, user?.role)
     );
 
     if (visibleChildren.length === 0) return null;
