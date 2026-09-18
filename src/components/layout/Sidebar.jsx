@@ -29,7 +29,8 @@ import {
   Code,
   MessageSquareText,
   Gift,
-  BarChart3
+  BarChart3,
+  BookOpenCheck
 } from 'lucide-react';
 
 import { useAuth } from '@/context/AuthContext';
@@ -135,6 +136,7 @@ const navigation = [
       { name: 'Platform Admins', href: '/users', icon: ShieldCheck, permissions: ['settings.manage'] },
       { name: 'Operations Guide', href: '/operations-guide', icon: BookOpen, permissions: ['settings.manage'] },
       { name: 'Tech Architecture', href: '/tech-architecture', icon: Code, permissions: ['settings.manage'] },
+      { name: 'Lima Learning', href: '/lima-guidance', icon: BookOpenCheck, permissions: ['settings.manage'] },
       { name: 'Settings', href: '/settings', icon: Settings, permissions: ['settings.manage'] },
     ]
   }

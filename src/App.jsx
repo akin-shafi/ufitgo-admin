@@ -38,6 +38,7 @@ import OperationsGuide from '@/screens/guide/OperationsGuide';
 import TechArchitectureScreen from '@/screens/guide/TechArchitectureScreen';
 import SavingsArchitectureScreen from '@/screens/guide/SavingsArchitectureScreen';
 import TravelFxArchitectureScreen from '@/screens/guide/TravelFxArchitectureScreen';
+import LimaGuidanceScreen from '@/screens/settings/LimaGuidanceScreen';
 
 import CustomerManagement from '@/screens/customers/CustomerManagement';
 import CustomerDetail from '@/screens/customers/CustomerDetail';
@@ -85,6 +86,7 @@ function App() {
               <Route path="/packages/:id" element={<PackageDetail />} />
               <Route path="/payments" element={<PaymentPlatformScreen />} />
               <Route path="/settings" element={<SettingsScreen />} />
+              <Route path="/lima-guidance" element={<LimaGuidanceScreen />} />
               <Route path="/broadcast" element={<BroadcastMessenger />} />
               <Route path="/templates" element={<TemplateManager />} />
               <Route path="/compliance" element={<ComplianceEscrowDashboard />} />
