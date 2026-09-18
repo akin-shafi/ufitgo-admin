@@ -61,14 +61,23 @@ export default function AdsManagement() {
   const submit = (event) => {
     event.preventDefault();
     const payload = {
-      ...form,
+      title: form.title,
+      description: form.description || undefined,
+      imageUrl: form.imageUrl || undefined,
+      redirectUrl: form.redirectUrl,
+      placement: form.placement,
+      isSponsored: Boolean(form.isSponsored),
+      businessName: form.businessName,
+      businessLogo: form.businessLogo || undefined,
+      cta: form.cta || undefined,
       priority: Number(form.priority),
       startDate: new Date(form.startDate).toISOString(), endDate: new Date(form.endDate).toISOString(),
+      active: Boolean(form.active),
       targetBudgetMin: form.targetBudgetMin === '' ? undefined : Number(form.targetBudgetMin),
       targetBudgetMax: form.targetBudgetMax === '' ? undefined : Number(form.targetBudgetMax),
       targetTravelType: form.targetTravelType || undefined,
       targetLocation: form.targetLocation || undefined,
-      imageUrl: form.imageUrl || undefined, businessLogo: form.businessLogo || undefined,
+      isPushCampaign: false,
     };
     mutation.mutate({ method: form.id ? 'put' : 'post', url: form.id ? `/admin/ads/${form.id}` : '/admin/ads', data: payload });
   };
