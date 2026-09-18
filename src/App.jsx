@@ -23,6 +23,7 @@ import TemplateManager from '@/screens/templates/TemplateManager';
 import ComplianceEscrowDashboard from '@/screens/ComplianceEscrowDashboard';
 import DocumentAccessLogsScreen from '@/screens/compliance/DocumentAccessLogsScreen';
 import AdvisorLeadsScreen from '@/screens/support/AdvisorLeadsScreen';
+import AdvisorFeedbackScreen from '@/screens/support/AdvisorFeedbackScreen';
 import ReferralCampaignsScreen from '@/screens/referrals/ReferralCampaignsScreen';
 import ReferralLedgerScreen from '@/screens/referrals/ReferralLedgerScreen';
 import VerificationDashboard from '@/screens/verification/VerificationDashboard';
@@ -89,6 +90,7 @@ function App() {
               <Route path="/compliance" element={<ComplianceEscrowDashboard />} />
               <Route path="/audit-logs" element={<DocumentAccessLogsScreen />} />
               <Route path="/advisor-leads" element={<AdvisorLeadsScreen />} />
+              <Route path="/advisor-feedback" element={<AdvisorFeedbackScreen />} />
               <Route path="/referral-campaigns" element={<ReferralCampaignsScreen />} />
               <Route path="/referral-ledger" element={<ReferralLedgerScreen />} />
               <Route path="/verifications" element={<VerificationDashboard />} />

@@ -96,6 +96,7 @@ const navigation = [
     permissions: ['leads.manage'],
     children: [
       { name: 'Custom Requests', href: '/advisor-leads', icon: MessageSquareText, permissions: ['leads.manage'] },
+      { name: 'Lima Feedback', href: '/advisor-feedback', icon: MessageSquareText, permissions: ['leads.manage'] },
     ]
   },
   {
