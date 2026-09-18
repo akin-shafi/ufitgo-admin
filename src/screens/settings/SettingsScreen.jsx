@@ -140,7 +140,8 @@ const SettingsScreen = () => {
                   { key: 'enableTravelDocs', label: 'Travel Documents', desc: 'Enable visa processing and travel document services.' },
                   { key: 'enableTargetSavings', label: 'Target Savings', desc: 'Enable user target savings plans for travel.' },
                   { key: 'enableProactiveAdvisorNudge', label: 'Proactive AI Nudge', desc: 'Show a bottom-sheet inviting users to chat with the AI Advisor after repeated zero-result searches.' },
-                  { key: 'enableReferralProgram', label: 'Referral & Rewards', desc: 'Enable the refer & earn program (signup and package-sale bonuses) across the app.' }
+                  { key: 'enableReferralProgram', label: 'Referral & Rewards', desc: 'Enable the refer & earn program (signup and package-sale bonuses) across the app.' },
+                  { key: 'enableOperatorDirectory', label: 'Operator Directory', desc: 'Show the browsable "All Operators" list in the app. Consider keeping off while onboarding few operators.' }
                 ].map((feature) => {
                   const isActive = configData?.data?.features?.[feature.key] || false;
                   return (
