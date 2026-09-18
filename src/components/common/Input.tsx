@@ -7,16 +7,16 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ label, error, ...props }, ref) => {
+  ({ label, error, className = "", ...props }, ref) => {
     return (
-      <div className="mb-4">
+      <div className="mb-4 w-full min-w-0">
         {label && (
           <label className="block text-sm font-medium text-gray-700 mb-2">
             {label}
           </label>
         )}
         <input
-          className="input-field"
+          className={`input w-full ${className}`}
           ref={ref}
           {...props}
         />
