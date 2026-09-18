@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { BarChart3, Eye, Loader2, Megaphone, MousePointerClick, Pencil, Plus, Power, Trash2, X } from 'lucide-react';
+import { BarChart3, Eye, Loader2, Megaphone, MousePointerClick, Pencil, Plus, Power, Trash2, X, Play, Pause } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import api from '@/api/client';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
@@ -40,6 +40,8 @@ export default function AdsManagement() {
   const queryClient = useQueryClient();
   const [form, setForm] = useState(null);
   const [metricsAdId, setMetricsAdId] = useState(null);
+  const [activeTab, setActiveTab] = useState('all');
+
   const { data: ads = [], isLoading } = useQuery({
     queryKey: ['admin-ads'],
     queryFn: () => api.get('/admin/ads').then((response) => response.data),
@@ -71,6 +73,17 @@ export default function AdsManagement() {
     mutation.mutate({ method: form.id ? 'put' : 'post', url: form.id ? `/admin/ads/${form.id}` : '/admin/ads', data: payload });
   };
 
+  const PLACEMENT_TABS = [
+    { id: 'all', label: 'All Placements' },
+    { id: 'homepage_hero', label: 'Homepage Hero' },
+    { id: 'homepage_sidebar', label: 'Homepage Sidebar' },
+    { id: 'explore_banner', label: 'Explore Banner' },
+    { id: 'package_detail', label: 'Package Detail' },
+    { id: 'default_placement', label: 'Default' },
+  ];
+
+  const filteredAds = activeTab === 'all' ? ads : ads.filter(ad => ad.placement === activeTab);
+
   return (
     <DashboardLayout title="Sponsored Ads">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
@@ -90,7 +103,7 @@ export default function AdsManagement() {
           <label className="text-sm text-fg/65">Starts<input required type="datetime-local" className="input mt-1" value={form.startDate} onChange={(event) => setForm({ ...form, startDate: event.target.value })} /></label>
           <label className="text-sm text-fg/65">Ends<input required type="datetime-local" className="input mt-1" value={form.endDate} onChange={(event) => setForm({ ...form, endDate: event.target.value })} /></label>
           <label className="text-sm text-fg/65">Travel type<select className="input mt-1" value={form.targetTravelType} onChange={(event) => setForm({ ...form, targetTravelType: event.target.value })}><option value="">All</option><option value="umrah">Umrah</option><option value="hajj">Hajj</option></select></label>
-          <label className="text-sm text-fg/65">Location target<input className="input mt-1" value={form.targetLocation} onChange={(event) => setForm({ ...form, targetLocation: event.target.value })} placeholder="Optional" /></label>
+          <label className="text-sm text-fg/65">Customer location target<input className="input mt-1" value={form.targetLocation} onChange={(event) => setForm({ ...form, targetLocation: event.target.value })} placeholder="Leave blank for nationwide" /><span className="block text-xs text-fg/45 mt-1">Matches the customer’s state or city, e.g. Lagos.</span></label>
           <label className="text-sm text-fg/65">Minimum budget<input type="number" min="0" className="input mt-1" value={form.targetBudgetMin} onChange={(event) => setForm({ ...form, targetBudgetMin: event.target.value })} /></label>
           <label className="text-sm text-fg/65">Maximum budget<input type="number" min="0" className="input mt-1" value={form.targetBudgetMax} onChange={(event) => setForm({ ...form, targetBudgetMax: event.target.value })} /></label>
           <label className="text-sm text-fg/65">Priority<input required type="number" min="0" className="input mt-1" value={form.priority} onChange={(event) => setForm({ ...form, priority: event.target.value })} /></label>
@@ -101,13 +114,101 @@ export default function AdsManagement() {
         <div className="flex justify-end gap-2 mt-5"><button type="button" className="btn-outline" onClick={() => setForm(null)}>Cancel</button><button className="btn-primary" disabled={mutation.isPending}>{mutation.isPending ? 'Saving…' : 'Save ad'}</button></div>
       </form>}
 
-      {isLoading ? <div className="card py-20 flex justify-center"><Loader2 className="animate-spin" /></div> : ads.length === 0 ? <div className="card py-16 text-center text-fg/50">No sponsored ads created yet.</div> : <div className="space-y-4">{ads.map((ad) => <article key={ad.id} className="card">
-        <div className="flex flex-col lg:flex-row gap-5">
-          <div className="w-full lg:w-52 aspect-[16/8] bg-bg rounded-lg overflow-hidden shrink-0">{ad.imageUrl ? <img src={ad.imageUrl} alt="" className="w-full h-full object-cover" /> : <div className="h-full flex items-center justify-center text-fg/30"><Megaphone /></div>}</div>
-          <div className="flex-1 min-w-0"><div className="flex flex-wrap items-center gap-2"><h3 className="font-bold text-fg">{ad.title}</h3><span className={`text-xs font-bold rounded-full px-2 py-1 ${ad.active ? 'bg-success/10 text-success' : 'bg-fg/10 text-fg/50'}`}>{ad.active ? 'ACTIVE' : 'INACTIVE'}</span><span className="text-xs text-fg/45">{ad.placement.replaceAll('_', ' ')}</span></div><p className="text-sm text-fg/60 mt-1">{ad.businessName} · {new Date(ad.startDate).toLocaleDateString()} – {new Date(ad.endDate).toLocaleDateString()}</p><div className="flex flex-wrap gap-4 mt-3 text-sm"><span className="inline-flex gap-1"><Eye size={15} /> {ad.impressions || 0}</span><span className="inline-flex gap-1"><MousePointerClick size={15} /> {ad.clicks || 0}</span><span><strong>{ad.impressions ? ((ad.clicks / ad.impressions) * 100).toFixed(2) : '0.00'}%</strong> CTR</span></div></div>
-          <div className="flex flex-wrap lg:justify-end gap-2"><button className="btn-outline" title="Edit" onClick={() => edit(ad)}><Pencil size={16} /></button><button className="btn-outline" title="Metrics" onClick={() => setMetricsAdId(metricsAdId === ad.id ? null : ad.id)}><BarChart3 size={16} /></button><button className="btn-outline" title={ad.active ? 'Deactivate' : 'Activate'} onClick={() => mutation.mutate({ method: 'patch', url: `/admin/ads/${ad.id}/toggle` })}><Power size={16} /></button><button className="btn-outline text-danger" title="Delete" onClick={() => { if (window.confirm(`Delete “${ad.title}”?`)) mutation.mutate({ method: 'delete', url: `/admin/ads/${ad.id}` }); }}><Trash2 size={16} /></button></div>
-        </div>{metricsAdId === ad.id && <AdMetrics adId={ad.id} />}
-      </article>)}</div>}
+      {/* Tabs Navigation */}
+      <div className="flex overflow-x-auto space-x-1 border-b border-border mb-6 pb-px scrollbar-hide">
+        {PLACEMENT_TABS.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`whitespace-nowrap px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+              activeTab === tab.id
+                ? 'border-primary text-primary'
+                : 'border-transparent text-fg/60 hover:text-fg hover:border-border'
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {isLoading ? (
+        <div className="card py-20 flex justify-center"><Loader2 className="animate-spin" /></div>
+      ) : ads.length === 0 ? (
+        <div className="card py-16 text-center text-fg/50">No sponsored ads created yet.</div>
+      ) : filteredAds.length === 0 ? (
+        <div className="card py-16 text-center text-fg/50">No ads found for this placement.</div>
+      ) : (
+        <div className="space-y-4">
+          {filteredAds.map((ad) => (
+            <article key={ad.id} className="card">
+              <div className="flex flex-col lg:flex-row gap-5">
+                <div className="w-full lg:w-52 aspect-[16/8] bg-bg rounded-lg overflow-hidden shrink-0">
+                  {ad.imageUrl ? (
+                    <img src={ad.imageUrl} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="h-full flex items-center justify-center text-fg/30"><Megaphone /></div>
+                  )}
+                </div>
+
+                <div className="flex-1 min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h3 className="font-bold text-fg">{ad.title}</h3>
+                    <span className={`text-xs font-bold rounded-full px-2 py-1 ${ad.active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                      {ad.active ? 'ACTIVE' : 'INACTIVE'}
+                    </span>
+                    <select
+                      className="text-xs text-fg bg-fg/10 border-transparent outline-none focus:ring-2 focus:ring-primary rounded-full px-2 py-1 cursor-pointer"
+                      value={ad.placement}
+                      onChange={(e) => {
+                        const payload = {
+                          ...ad,
+                          placement: e.target.value,
+                          priority: Number(ad.priority),
+                        };
+                        mutation.mutate({ method: 'put', url: `/admin/ads/${ad.id}`, data: payload });
+                      }}
+                      disabled={mutation.isPending}
+                    >
+                      <option value="homepage_hero">Homepage hero</option>
+                      <option value="homepage_sidebar">Homepage sidebar</option>
+                      <option value="explore_banner">Explore banner</option>
+                      <option value="package_detail">Package detail</option>
+                      <option value="default_placement">Default placement</option>
+                    </select>
+                  </div>
+
+                  <p className="text-sm text-fg/60 mt-2">
+                    {ad.businessName} · {new Date(ad.startDate).toLocaleDateString()} – {new Date(ad.endDate).toLocaleDateString()}
+                  </p>
+
+                  <div className="flex flex-wrap gap-4 mt-4 text-sm bg-bg/50 inline-flex p-2 rounded-lg">
+                    <span className="inline-flex items-center gap-1.5"><Eye size={15} className="text-primary" /> {ad.impressions || 0} views</span>
+                    <span className="inline-flex items-center gap-1.5"><MousePointerClick size={15} className="text-primary" /> {ad.clicks || 0} clicks</span>
+                    <span className="inline-flex items-center gap-1.5"><strong>{ad.impressions ? ((ad.clicks / ad.impressions) * 100).toFixed(2) : '0.00'}%</strong> CTR</span>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap lg:flex-col lg:justify-start gap-2 min-w-[140px]">
+                  <button className={`btn-outline flex items-center justify-center gap-2 w-full ${ad.active ? 'border-amber-200 text-amber-600 hover:bg-amber-50' : 'border-green-200 text-green-600 hover:bg-green-50'}`} onClick={() => mutation.mutate({ method: 'patch', url: `/admin/ads/${ad.id}/toggle` })}>
+                    {ad.active ? <><Pause size={16} /> Deactivate</> : <><Play size={16} /> Activate</>}
+                  </button>
+                  <button className="btn-outline flex items-center justify-center gap-2 w-full" onClick={() => edit(ad)}>
+                    <Pencil size={16} /> Edit
+                  </button>
+                  <button className={`btn-outline flex items-center justify-center gap-2 w-full ${metricsAdId === ad.id ? 'bg-primary text-white border-primary' : ''}`} onClick={() => setMetricsAdId(metricsAdId === ad.id ? null : ad.id)}>
+                    <BarChart3 size={16} /> Metrics
+                  </button>
+                  <button className="btn-outline text-red-500 border-red-100 hover:bg-red-50 flex items-center justify-center gap-2 w-full mt-auto" onClick={() => { if (window.confirm(`Delete “${ad.title}”?`)) mutation.mutate({ method: 'delete', url: `/admin/ads/${ad.id}` }); }}>
+                    <Trash2 size={16} /> Delete
+                  </button>
+                </div>
+              </div>
+
+              {metricsAdId === ad.id && <AdMetrics adId={ad.id} />}
+            </article>
+          ))}
+        </div>
+      )}
     </DashboardLayout>
   );
 }
