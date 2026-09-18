@@ -12,6 +12,7 @@ const SettingsScreen = () => {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
+  const [activeTab, setActiveTab] = useState('profile');
   
   const [passwordData, setPasswordData] = useState({
     oldPassword: '',
@@ -95,8 +96,36 @@ const SettingsScreen = () => {
   return (
     <DashboardLayout title="Account Settings">
       <div className="max-w-4xl space-y-8">
+
+        {/* Tabs Navigation */}
+        <div className="flex space-x-1 border-b border-border overflow-x-auto" role="tablist" aria-label="Settings sections">
+          {[
+            { id: 'profile', label: 'Profile', icon: User },
+            { id: 'features', label: 'Platform Features', icon: Settings },
+            { id: 'support', label: 'Support Contact', icon: MessageCircle },
+            { id: 'security', label: 'Security', icon: Lock },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              role="tab"
+              aria-selected={activeTab === tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex shrink-0 items-center space-x-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+                activeTab === tab.id
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-fg/60 hover:text-fg hover:border-border'
+              }`}
+            >
+              <tab.icon className="w-4 h-4" />
+              <span>{tab.label}</span>
+            </button>
+          ))}
+        </div>
+
         {/* Profile Info Section */}
-        <section className="card">
+        {activeTab === 'profile' && (
+        <section className="card animate-in fade-in duration-300">
           <div className="flex items-center space-x-4 mb-8">
             <div className="w-16 h-16 rounded-2xl bg-primary/20 flex items-center justify-center text-primary text-2xl font-bold">
               {user?.companyName?.charAt(0)}
@@ -136,8 +165,10 @@ const SettingsScreen = () => {
             </div>
           </div>
         </section>
+        )}
 
         {/* Platform Features Section */}
+        {activeTab === 'features' && (
         <section className="card">
           <div className="flex items-center space-x-2 mb-6 text-fg">
             <Settings className="w-5 h-5 text-primary" />
@@ -267,9 +298,11 @@ const SettingsScreen = () => {
             </div>
           )}
         </section>
+        )}
 
         {/* Support Contact Section */}
-        <section className="card">
+        {activeTab === 'support' && (
+        <section className="card animate-in fade-in duration-300">
           <div className="flex items-center space-x-2 mb-6 text-fg">
             <MessageCircle className="w-5 h-5 text-primary" />
             <h3 className="text-lg font-bold">Support Contact</h3>
@@ -303,9 +336,11 @@ const SettingsScreen = () => {
             </div>
           </div>
         </section>
+        )}
 
         {/* Security Section */}
-        <section className="card">
+        {activeTab === 'security' && (
+        <section className="card animate-in fade-in duration-300">
           <div className="flex items-center space-x-2 mb-6 text-fg">
             <Lock className="w-5 h-5 text-primary" />
             <h3 className="text-lg font-bold">Security & Authentication</h3>
@@ -378,6 +413,7 @@ const SettingsScreen = () => {
             </div>
           </form>
         </section>
+        )}
       </div>
     </DashboardLayout>
   );
