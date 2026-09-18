@@ -12,7 +12,17 @@ export const packagesService = {
   },
 
   createForOperator: async (operatorId, data) => {
-    const res = await api.post(`/admin/operator-auth/packages/for-operator/${operatorId}`, data, {
+    const form = new FormData();
+    Object.entries(data).forEach(([key, value]) => {
+      if (value === undefined || value === null || key === 'imageFiles') return;
+      if (Array.isArray(value) || typeof value === 'object') {
+        form.append(key, JSON.stringify(value));
+      } else {
+        form.append(key, String(value));
+      }
+    });
+    (data.imageFiles || []).forEach((file) => form.append('images', file));
+    const res = await api.post(`/admin/operator-auth/packages/for-operator/${operatorId}`, form, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
     return res.data;

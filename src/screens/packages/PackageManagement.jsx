@@ -38,7 +38,7 @@ const PackageManagement = () => {
           <p className="text-fg/60 text-sm">Centralized view of all packages created across all operators.</p>
         </div>
         <button 
-          onClick={() => navigate('/operators')}
+          onClick={() => navigate('/packages/create')}
           className="btn-primary flex items-center"
         >
           <Plus className="w-5 h-5 mr-2" />

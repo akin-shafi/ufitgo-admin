@@ -84,6 +84,7 @@ function App() {
               <Route path="/operators/:id/create-package" element={<CreatePackagePage />} />
               <Route path="/operators/:id" element={<OperatorDetail />} />
               <Route path="/packages" element={<PackageManagement />} />
+              <Route path="/packages/create" element={<CreatePackagePage />} />
               <Route path="/packages/:id" element={<PackageDetail />} />
               <Route path="/payments" element={<PaymentPlatformScreen />} />
               <Route path="/settings" element={<SettingsScreen />} />

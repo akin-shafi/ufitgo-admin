@@ -14,7 +14,7 @@ const INCLUSIONS_LIST = [
   { key: "transfers", label: "Airport Transfers" },
 ]
 
-export const PackageForm = ({ initialData, onSubmit, onCancel }) => {
+export const PackageForm = ({ initialData, onSubmit, onCancel, submitting = false }) => {
   const [dateError, setDateError] = useState("")
   const [generating, setGenerating] = useState(false)
 
@@ -70,7 +70,17 @@ export const PackageForm = ({ initialData, onSubmit, onCancel }) => {
     groupDiscountPercentage: initialData?.groupDiscountPercentage || "",
 
     extensionIds: initialData?.extensionIds || [],
+    imageFiles: [],
   })
+  const isTour = formData.packageType === "tour"
+  const inclusionsList = isTour
+    ? [
+      { key: "flight", label: "Transport / Flight" },
+      { key: "hotel", label: "Accommodation" },
+      { key: "meals", label: "Meals" },
+      { key: "transfers", label: "Local Transfers" },
+    ]
+    : INCLUSIONS_LIST
 
   const handleGenerateSuggestions = async () => {
     if (!formData.name.trim()) {
@@ -191,9 +201,9 @@ export const PackageForm = ({ initialData, onSubmit, onCancel }) => {
     })
   }
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e, status = "active") => {
     e.preventDefault()
-    if (!installmentValid || totalPrice === 0) return
+    if (!installmentValid || totalPrice === 0 || !formData.packageType || !formData.maxPilgrims) return
 
     await onSubmit({
       ...formData,
@@ -215,7 +225,7 @@ export const PackageForm = ({ initialData, onSubmit, onCancel }) => {
         ...t,
         price: Number(t.price)
       })),
-    })
+    }, status)
   }
 
   return (
@@ -223,7 +233,7 @@ export const PackageForm = ({ initialData, onSubmit, onCancel }) => {
       <form onSubmit={handleSubmit} className="grid grid-cols-1 xl:grid-cols-3 gap-6 pb-32">
         <div className="xl:col-span-2 space-y-6">
           <section className="bg-card border border-border rounded-2xl p-6">
-            <h2 className="text-lg font-semibold text-fg mb-6">Package Details</h2>
+            <h2 className="text-lg font-semibold text-fg mb-6">Basic Information</h2>
 
             <Input
               label="Package Name *"
@@ -244,6 +254,7 @@ export const PackageForm = ({ initialData, onSubmit, onCancel }) => {
                   onChange={(e) => setFormData((prev) => ({ ...prev, packageType: e.target.value }))}
                   disabled={metadataLoading}
                   className="w-full bg-bg border border-border rounded-xl px-4 py-3 text-fg"
+                  required
                 >
                   <option value="">Select Package Type</option>
                   {packageTypes.map((type) => (
@@ -281,7 +292,7 @@ export const PackageForm = ({ initialData, onSubmit, onCancel }) => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
               <Input label="Duration (Days)" value={formData.duration} readOnly className="bg-bg/40 cursor-not-allowed" />
-              <Input label="Maximum Pilgrims" name="maxPilgrims" type="number" value={formData.maxPilgrims} onChange={handleChange} placeholder="e.g 50" />
+              <Input label={isTour ? "Total Guest Capacity *" : "Maximum Pilgrims *"} name="maxPilgrims" type="number" min="1" value={formData.maxPilgrims} onChange={handleChange} placeholder="e.g 50" required />
             </div>
 
             {/* AI CTA – Perfect spot: right after name */}
@@ -310,23 +321,38 @@ export const PackageForm = ({ initialData, onSubmit, onCancel }) => {
                 name="description"
                 value={formData.description}
                 onChange={handleChange}
-                placeholder="A compelling overview of your package..."
+                placeholder={isTour ? "Describe destinations, experiences, accommodation and transport..." : "Describe package details, itinerary highlights and spiritual benefits..."}
                 rows={5}
                 className="w-full bg-bg border border-border rounded-xl px-4 py-3 text-fg resize-none focus:ring-2 focus:ring-primary/50"
               />
+            </div>
+
+            <div className="mt-6">
+              <label className="block text-sm font-medium text-fg mb-2">Package Images</label>
+              <label className="flex min-h-28 cursor-pointer items-center justify-center rounded-xl border-2 border-dashed border-border bg-bg/40 px-4 text-center hover:border-primary/50">
+                <span className="text-sm text-fg/60">Select up to 10 JPG, PNG, or WEBP images</span>
+                <input
+                  type="file"
+                  className="hidden"
+                  accept="image/jpeg,image/png,image/webp"
+                  multiple
+                  onChange={(event) => setFormData((previous) => ({ ...previous, imageFiles: Array.from(event.target.files || []).slice(0, 10) }))}
+                />
+              </label>
+              {formData.imageFiles.length > 0 && <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-2">{formData.imageFiles.map((file, index) => <div key={`${file.name}-${index}`} className="rounded-lg border border-border bg-bg px-3 py-2 text-xs text-fg/70 truncate" title={file.name}>{file.name}</div>)}</div>}
             </div>
           </section>
 
           <section className="bg-card border border-border rounded-2xl p-6">
             <h2 className="text-lg font-semibold text-fg mb-4 flex items-center gap-2">
-              Itinerary Highlights
+              Logistics & Schedule
             </h2>
             <textarea
               name="itinerary"
               value={formData.itinerary}
               onChange={handleChange}
               rows={8}
-              placeholder="Day 1: Arrival in Jeddah...\nDay 2: Umrah rituals...\nDay 3: Ziyarah in Madinah..."
+              placeholder={isTour ? "Day 1: Arrival and welcome experience...\nDay 2: Guided city tour..." : "Day 1: Arrival in Jeddah...\nDay 2: Umrah rituals...\nDay 3: Ziyarah in Madinah..."}
               className="w-full rounded-xl bg-bg border border-border px-4 py-3 text-sm text-fg resize-none focus:ring-2 focus:ring-primary/50"
             />
             <p className="text-xs text-fg/60 mt-2">Quick summary. Full detailed itinerary can be added later.</p>
@@ -519,8 +545,8 @@ export const PackageForm = ({ initialData, onSubmit, onCancel }) => {
           </section>
 
           {/* Add-ons / Extensions */}
-          <section className="bg-card border border-border rounded-2xl p-6">
-            <h2 className="text-lg font-semibold text-fg mb-4">Add-ons (Optional)</h2>
+          {!isTour && <section className="bg-card border border-border rounded-2xl p-6">
+            <h2 className="text-lg font-semibold text-fg mb-4">Ziyarah Extensions (Optional)</h2>
             <p className="text-sm text-fg/60 mb-4">Select optional add-ons users can purchase with this package.</p>
             {availableExtensions.length === 0 ? (
               <p className="text-sm text-fg/50 italic">No add-ons available.</p>
@@ -552,13 +578,13 @@ export const PackageForm = ({ initialData, onSubmit, onCancel }) => {
                 ))}
               </div>
             )}
-          </section>
+          </section>}
 
           {/* Inclusions */}
           <section className="bg-card border border-border rounded-2xl p-6">
             <h2 className="text-lg font-semibold text-fg mb-4">Inclusions</h2>
             <div className="space-y-3">
-              {INCLUSIONS_LIST.map((item) => (
+              {inclusionsList.map((item) => (
                 <button
                   type="button"
                   key={item.key}
@@ -594,17 +620,13 @@ export const PackageForm = ({ initialData, onSubmit, onCancel }) => {
           <button
             type="button"
             onClick={onCancel}
+            disabled={submitting}
             className="px-5 py-2 rounded-lg border border-border text-fg hover:bg-border/50 transition"
           >
             Cancel
           </button>
-          <Button
-            type="submit"
-            disabled={!installmentValid || totalPrice === 0}
-            onClick={handleSubmit}
-          >
-            {initialData ? "Update Package" : "Create Package"}
-          </Button>
+          {!initialData && <Button type="button" variant="outline" disabled={submitting || !installmentValid || totalPrice === 0 || !formData.packageType || !formData.maxPilgrims} onClick={(event) => handleSubmit(event, "draft")}>{submitting ? "Saving..." : "Save Draft"}</Button>}
+          <Button type="submit" disabled={submitting || !installmentValid || totalPrice === 0 || !formData.packageType || !formData.maxPilgrims} onClick={(event) => handleSubmit(event, "active")}>{submitting ? "Saving..." : initialData ? "Update Package" : "Publish Package"}</Button>
         </div>
       </div>
     </>
