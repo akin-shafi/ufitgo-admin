@@ -23,6 +23,10 @@ export const PERMISSION_GROUPS = [
     permissions: ['leads.manage'],
   },
   {
+    label: 'Growth',
+    permissions: ['referrals.manage'],
+  },
+  {
     label: 'Monitoring',
     permissions: ['monitoring.read', 'infrastructure.read'],
   },

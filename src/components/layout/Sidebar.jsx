@@ -27,7 +27,8 @@ import {
   PiggyBank,
   BookOpen,
   Code,
-  MessageSquareText
+  MessageSquareText,
+  Gift
 } from 'lucide-react';
 
 import { useAuth } from '@/context/AuthContext';
@@ -93,6 +94,15 @@ const navigation = [
     permissions: ['leads.manage'],
     children: [
       { name: 'Custom Requests', href: '/advisor-leads', icon: MessageSquareText, permissions: ['leads.manage'] },
+    ]
+  },
+  {
+    name: 'Growth',
+    icon: Gift,
+    permissions: ['referrals.manage'],
+    children: [
+      { name: 'Referral Campaigns', href: '/referral-campaigns', icon: Gift, permissions: ['referrals.manage'] },
+      { name: 'Referral Ledger', href: '/referral-ledger', icon: Gift, permissions: ['referrals.manage'] },
     ]
   },
   {
