@@ -48,6 +48,7 @@ import RevenueAnalytics from '@/screens/analytics/RevenueAnalytics';
 import BookingsAnalytics from '@/screens/analytics/BookingsAnalytics';
 import CustomersAnalytics from '@/screens/analytics/CustomersAnalytics';
 import OperatorsAnalytics from '@/screens/analytics/OperatorsAnalytics';
+import AdvisorDemandInsights from '@/screens/analytics/AdvisorDemandInsights';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -106,6 +107,7 @@ function App() {
               <Route path="/analytics/bookings" element={<BookingsAnalytics />} />
               <Route path="/analytics/customers" element={<CustomersAnalytics />} />
               <Route path="/analytics/operators" element={<OperatorsAnalytics />} />
+              <Route path="/analytics/advisor-demand" element={<AdvisorDemandInsights />} />
               {/* Add more protected routes as needed */}
             </Route>
           </Routes>

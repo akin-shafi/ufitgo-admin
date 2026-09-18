@@ -28,7 +28,8 @@ import {
   BookOpen,
   Code,
   MessageSquareText,
-  Gift
+  Gift,
+  BarChart3
 } from 'lucide-react';
 
 import { useAuth } from '@/context/AuthContext';
@@ -53,6 +54,7 @@ const navigation = [
       { name: 'Bookings', href: '/analytics/bookings', icon: Briefcase, permissions: ['analytics.read'] },
       { name: 'Customers', href: '/analytics/customers', icon: Users, permissions: ['analytics.read'] },
       { name: 'Operators', href: '/analytics/operators', icon: Briefcase, permissions: ['analytics.read'] },
+      { name: 'Lima Demand', href: '/analytics/advisor-demand', icon: BarChart3, permissions: ['analytics.read'] },
     ]
   },
   {

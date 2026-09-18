@@ -45,7 +45,7 @@ export const ROLE_DEFAULT_PERMISSIONS = {
   SUPER_ADMIN: ['*'],
   MANAGING_DIRECTOR: ['*'],
   FINANCE: ['finance.summary.read', 'payments.read', 'settlements.manage', 'commissions.manage', 'reconciliation.manage'],
-  OPERATIONS: ['users.manage', 'operators.manage', 'packages.manage', 'bookings.manage', 'journeys.manage'],
+  OPERATIONS: ['users.manage', 'operators.manage', 'packages.manage', 'bookings.manage', 'journeys.manage', 'analytics.read'],
   COMPLIANCE: ['kyc.manage', 'kyb.manage', 'compliance.manage'],
   TECHNICAL: ['monitoring.read', 'infrastructure.read', 'extensions.manage'],
   SUPPORT: ['users.manage', 'bookings.manage', 'leads.manage'],
