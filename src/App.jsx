@@ -30,6 +30,7 @@ import VerificationDashboard from '@/screens/verification/VerificationDashboard'
 import VerificationDetail from '@/screens/verification/VerificationDetail';
 import CommissionManagement from '@/screens/commissions/CommissionManagement';
 import PromoManagement from '@/screens/promos/PromoManagement';
+import AdsManagement from '@/screens/ads/AdsManagement';
 import JourneyTrackerDashboard from '@/screens/bookings/JourneyTrackerDashboard';
 import JourneyBookingDetail from '@/screens/bookings/JourneyBookingDetail';
 import SavingsTrackerDashboard from '@/screens/users/SavingsTrackerDashboard';
@@ -99,6 +100,7 @@ function App() {
               <Route path="/verifications/:id" element={<VerificationDetail />} />
               <Route path="/commissions" element={<CommissionManagement />} />
               <Route path="/promos" element={<PromoManagement />} />
+              <Route path="/ads" element={<AdsManagement />} />
               <Route path="/journey-tracker" element={<JourneyTrackerDashboard />} />
               <Route path="/journey-tracker/:id" element={<JourneyBookingDetail />} />
               <Route path="/savings-tracker" element={<SavingsTrackerDashboard />} />

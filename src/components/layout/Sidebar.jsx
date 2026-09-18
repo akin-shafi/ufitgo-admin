@@ -120,9 +120,10 @@ const navigation = [
   {
     name: 'Marketing & Tools',
     icon: Megaphone,
-    permissions: ['marketing.manage', 'extensions.manage'],
+    permissions: ['marketing.manage', 'ads.manage', 'extensions.manage'],
     children: [
       { name: 'Promo Codes', href: '/promos', icon: Megaphone, permissions: ['marketing.manage'] },
+      { name: 'Sponsored Ads', href: '/ads', icon: Megaphone, permissions: ['ads.manage'] },
       { name: 'Broadcast', href: '/broadcast', icon: Megaphone, permissions: ['marketing.manage'] },
       { name: 'Email Templates', href: '/templates', icon: Mail, permissions: ['marketing.manage'] },
       { name: 'Extensions', href: '/extensions', icon: Globe, permissions: ['extensions.manage'] },

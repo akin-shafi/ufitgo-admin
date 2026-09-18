@@ -32,7 +32,7 @@ export const PERMISSION_GROUPS = [
   },
   {
     label: 'Marketing & Tools',
-    permissions: ['marketing.manage', 'extensions.manage'],
+    permissions: ['marketing.manage', 'ads.manage', 'extensions.manage'],
   },
   {
     label: 'Platform',
