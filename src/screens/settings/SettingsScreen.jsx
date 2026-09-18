@@ -4,7 +4,7 @@ import toast from 'react-hot-toast';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useAuth } from '@/context/AuthContext';
 import api from '@/api/client';
-import { Lock, User, Mail, Shield, ShieldAlert, CheckCircle2, Loader2, Save, Settings, ToggleLeft, ToggleRight } from 'lucide-react';
+import { Lock, User, Mail, Shield, ShieldAlert, CheckCircle2, Loader2, Save, Settings, ToggleLeft, ToggleRight, MessageCircle } from 'lucide-react';
 
 const SettingsScreen = () => {
   const { user } = useAuth();
@@ -38,6 +38,25 @@ const SettingsScreen = () => {
       toast.error(err.response?.data?.message || 'Failed to update platform configuration');
     }
   });
+
+  // Platform Settings (support contact, etc.) — a separate key-value store from system config
+  const { data: platformSettings } = useQuery({
+    queryKey: ['platform-settings'],
+    queryFn: () => api.get('/admin/platform-settings').then(res => res.data),
+  });
+
+  const updatePlatformSettingMutation = useMutation({
+    mutationFn: ({ key, value, description }) => api.put(`/admin/platform-settings/${key}`, { value, description }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['platform-settings'] });
+      toast.success('Setting updated successfully');
+    },
+    onError: (err) => {
+      toast.error(err.response?.data?.message || 'Failed to update setting');
+    }
+  });
+
+  const whatsappSetting = platformSettings?.find((s) => s.key === 'SUPPORT_WHATSAPP_NUMBER');
 
   const handleToggleFeature = (featureKey, featureLabel, currentValue) => {
     const nextValue = !currentValue;
@@ -245,6 +264,42 @@ const SettingsScreen = () => {
               </div>
             </div>
           )}
+        </section>
+
+        {/* Support Contact Section */}
+        <section className="card">
+          <div className="flex items-center space-x-2 mb-6 text-fg">
+            <MessageCircle className="w-5 h-5 text-primary" />
+            <h3 className="text-lg font-bold">Support Contact</h3>
+          </div>
+          <p className="text-sm text-fg/60 mb-6">
+            This number powers the "Chat with Support on WhatsApp" links shown across the mobile app.
+          </p>
+          <div className="flex items-center justify-between p-4 bg-bg/50 rounded-xl border border-border">
+            <div className="w-2/3">
+              <div className="font-bold text-fg">Support WhatsApp Number</div>
+              <div className="text-xs text-fg/60 mt-1">Include country code, e.g. +2348148804448.</div>
+            </div>
+            <div className="w-1/3">
+              <input
+                type="text"
+                className="input py-1 text-sm text-right w-full"
+                defaultValue={whatsappSetting?.value || ''}
+                key={whatsappSetting?.value}
+                placeholder="+234..."
+                onBlur={(e) => {
+                  const val = e.target.value.trim();
+                  if (val && val !== whatsappSetting?.value) {
+                    updatePlatformSettingMutation.mutate({
+                      key: 'SUPPORT_WHATSAPP_NUMBER',
+                      value: val,
+                      description: 'Official Ufitgo WhatsApp support number for inquiries.',
+                    });
+                  }
+                }}
+              />
+            </div>
+          </div>
         </section>
 
         {/* Security Section */}
