@@ -26,7 +26,8 @@ import {
   X, // <--- Added here
   PiggyBank,
   BookOpen,
-  Code
+  Code,
+  MessageSquareText
 } from 'lucide-react';
 
 import { useAuth } from '@/context/AuthContext';
@@ -84,6 +85,14 @@ const navigation = [
       { name: 'KYC Verifications', href: '/verifications', icon: CheckCircle, permissions: ['kyc.manage'] },
       { name: 'Compliance Escrow', href: '/compliance', icon: ShieldCheck, permissions: ['compliance.manage'], visible: isFeatureEnabled('ESCROW_DASHBOARD') },
       { name: 'Document Access Logs', href: '/audit-logs', icon: ShieldCheck, permissions: ['kyc.manage'], visible: isFeatureEnabled('AUDIT_LOGS') },
+    ]
+  },
+  {
+    name: 'Support',
+    icon: MessageSquareText,
+    permissions: ['leads.manage'],
+    children: [
+      { name: 'Custom Requests', href: '/advisor-leads', icon: MessageSquareText, permissions: ['leads.manage'] },
     ]
   },
   {

@@ -19,6 +19,10 @@ export const PERMISSION_GROUPS = [
     permissions: ['kyc.manage', 'kyb.manage', 'compliance.manage'],
   },
   {
+    label: 'Support',
+    permissions: ['leads.manage'],
+  },
+  {
     label: 'Monitoring',
     permissions: ['monitoring.read', 'infrastructure.read'],
   },
@@ -40,5 +44,5 @@ export const ROLE_DEFAULT_PERMISSIONS = {
   OPERATIONS: ['users.manage', 'operators.manage', 'packages.manage', 'bookings.manage', 'journeys.manage'],
   COMPLIANCE: ['kyc.manage', 'kyb.manage', 'compliance.manage'],
   TECHNICAL: ['monitoring.read', 'infrastructure.read', 'extensions.manage'],
-  SUPPORT: ['users.manage', 'bookings.manage'],
+  SUPPORT: ['users.manage', 'bookings.manage', 'leads.manage'],
 };

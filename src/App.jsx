@@ -22,6 +22,7 @@ import BroadcastMessenger from '@/screens/notifications/BroadcastMessenger';
 import TemplateManager from '@/screens/templates/TemplateManager';
 import ComplianceEscrowDashboard from '@/screens/ComplianceEscrowDashboard';
 import DocumentAccessLogsScreen from '@/screens/compliance/DocumentAccessLogsScreen';
+import AdvisorLeadsScreen from '@/screens/support/AdvisorLeadsScreen';
 import VerificationDashboard from '@/screens/verification/VerificationDashboard';
 import VerificationDetail from '@/screens/verification/VerificationDetail';
 import CommissionManagement from '@/screens/commissions/CommissionManagement';
@@ -84,6 +85,7 @@ function App() {
               <Route path="/templates" element={<TemplateManager />} />
               <Route path="/compliance" element={<ComplianceEscrowDashboard />} />
               <Route path="/audit-logs" element={<DocumentAccessLogsScreen />} />
+              <Route path="/advisor-leads" element={<AdvisorLeadsScreen />} />
               <Route path="/verifications" element={<VerificationDashboard />} />
               <Route path="/verifications/:id" element={<VerificationDetail />} />
               <Route path="/commissions" element={<CommissionManagement />} />
