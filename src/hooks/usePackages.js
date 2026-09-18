@@ -45,9 +45,9 @@ export const usePackages = () => {
         packagesService.getExtensions(),
       ])
 
-      setPackageTypes(typesRes || [])
-      setServiceLevels(levelsRes || [])
-      setAvailableExtensions(extensionsRes?.data || [])
+      setPackageTypes(Array.isArray(typesRes) ? typesRes : typesRes?.data || [])
+      setServiceLevels(Array.isArray(levelsRes) ? levelsRes : levelsRes?.data || [])
+      setAvailableExtensions(Array.isArray(extensionsRes) ? extensionsRes : extensionsRes?.data || [])
     } catch (err) {
       console.error("[v0] Error fetching metadata:", err)
       setMetadataError(err.message || "Failed to load package options")
