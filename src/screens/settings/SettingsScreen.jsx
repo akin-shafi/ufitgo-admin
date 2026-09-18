@@ -156,6 +156,7 @@ const SettingsScreen = () => {
                 {[
                   { key: 'enableTravelFx', label: 'Travel FX', desc: 'Enable foreign exchange and currency swap features.' },
                   { key: 'enableAiAdvisor', label: 'AI Advisor (Lima)', desc: 'Enable Lima chat, recommendations, proactive prompts, and AI package assistance.' },
+                  { key: 'enableVisaProgress', label: 'Visa Progress', desc: 'Enable internal visa status updates, customer timeline, and official Saudi portal link.' },
                   { key: 'enablePassportAssist', label: 'Passport Assist', desc: 'Enable passport application and renewal services.' },
                   { key: 'enableTravelDocs', label: 'Travel Documents', desc: 'Enable visa processing and travel document services.' },
                   { key: 'enableTargetSavings', label: 'Target Savings', desc: 'Enable user target savings plans for travel.' },

@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, CheckCircle, FileText, Loader2, UploadCloud, UserPlus, Trash2, IdCard } from 'lucide-react';
+import { ArrowLeft, CheckCircle, FileText, Loader2, UploadCloud, UserPlus, Trash2, IdCard, Stamp } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import api from '@/api/client';
@@ -175,6 +175,51 @@ const requirements = [
   ['shahadah', 'Shahadah Certificate', 'Official Islamic centre letter when a convert passport has no Muslim name.', true],
 ];
 
+const VISA_STATUSES = [
+  'NOT_STARTED', 'DOCUMENTS_REQUESTED', 'DOCUMENTS_RECEIVED', 'SUBMITTED_TO_OPERATOR',
+  'SUBMITTED_TO_AUTHORITY', 'ADDITIONAL_INFORMATION_REQUIRED', 'UNDER_PROCESSING',
+  'APPROVED', 'REJECTED_OR_DELAYED',
+];
+
+function VisaProgressPanel({ booking }) {
+  const queryClient = useQueryClient();
+  const current = booking.visaProgress || {};
+  const [form, setForm] = useState({
+    status: current.status || 'NOT_STARTED',
+    applicationNumber: current.applicationNumber || '',
+    passportNumberLast4: current.passportNumberMasked?.slice(-4) || '',
+    submittedAt: current.submittedAt?.slice(0, 10) || '',
+    note: '',
+  });
+  const mutation = useMutation({
+    mutationFn: () => api.post(`/admin/bookings/${booking.id}/visa-progress`, form),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-journey-tracker'] });
+      setForm((value) => ({ ...value, note: '' }));
+      toast.success('Visa progress updated and customer notified');
+    },
+    onError: (error) => toast.error(error.response?.data?.message || 'Could not update visa progress'),
+  });
+
+  return (
+    <section className="card mt-6">
+      <div className="flex items-start justify-between gap-4 mb-5">
+        <div><h2 className="font-semibold">Visa progress</h2><p className="text-sm text-fg/60 mt-1">Record updates confirmed through the operator. Store only the last four passport digits.</p></div>
+        <Stamp className="text-primary" />
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <label className="text-xs text-fg/60">Status<select className="input mt-1" value={form.status} onChange={(event) => setForm({ ...form, status: event.target.value })}>{VISA_STATUSES.map((status) => <option key={status} value={status}>{status.replaceAll('_', ' ')}</option>)}</select></label>
+        <label className="text-xs text-fg/60">Application number<input className="input mt-1" maxLength={80} value={form.applicationNumber} onChange={(event) => setForm({ ...form, applicationNumber: event.target.value })} /></label>
+        <label className="text-xs text-fg/60">Passport last 4 digits<input className="input mt-1" inputMode="numeric" pattern="[0-9]{4}" maxLength={4} value={form.passportNumberLast4} onChange={(event) => setForm({ ...form, passportNumberLast4: event.target.value.replace(/\D/g, '').slice(0, 4) })} /></label>
+        <label className="text-xs text-fg/60">Submitted date<input type="date" className="input mt-1" value={form.submittedAt} onChange={(event) => setForm({ ...form, submittedAt: event.target.value })} /></label>
+      </div>
+      <label className="block text-xs text-fg/60 mt-3">Customer-visible update<textarea className="input mt-1 resize-y" rows="2" maxLength={500} value={form.note} onChange={(event) => setForm({ ...form, note: event.target.value })} placeholder="What was confirmed and what happens next?" /></label>
+      <div className="flex justify-end mt-3"><button className="btn-primary" disabled={mutation.isPending} onClick={() => mutation.mutate()}>{mutation.isPending ? 'Saving…' : 'Save update & notify'}</button></div>
+      {current.history?.length > 0 && <div className="mt-6 border-t border-border pt-4"><h3 className="text-sm font-semibold mb-3">Update history</h3><div className="space-y-3">{[...current.history].reverse().map((entry, index) => <div key={`${entry.updatedAt}-${index}`} className="border-l-2 border-primary pl-3 text-sm"><p className="font-medium">{entry.status.replaceAll('_', ' ')}</p>{entry.note && <p className="text-fg/70 mt-1">{entry.note}</p>}<p className="text-xs text-fg/40 mt-1">{new Date(entry.updatedAt).toLocaleString()} · {entry.updatedBy || 'Ufitgo Operations'}</p></div>)}</div></div>}
+    </section>
+  );
+}
+
 export default function JourneyBookingDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -184,6 +229,10 @@ export default function JourneyBookingDetail() {
   const { data: response, isLoading } = useQuery({
     queryKey: ['admin-journey-tracker'],
     queryFn: () => api.get('/admin/bookings/journey-tracker').then((res) => res.data),
+  });
+  const { data: configResponse } = useQuery({
+    queryKey: ['system-config'],
+    queryFn: () => api.get('/admin/customers/system/config').then((res) => res.data),
   });
   const booking = useMemo(() => (response || []).find((item) => String(item.id) === String(id)), [response, id]);
 
@@ -219,6 +268,7 @@ export default function JourneyBookingDetail() {
         </div></section>
       </div>
       <TravelersPanel bookingId={booking.id} />
+      {configResponse?.data?.features?.enableVisaProgress === true && <VisaProgressPanel booking={booking} />}
     </DashboardLayout>
   );
 }
